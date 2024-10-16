@@ -38,7 +38,7 @@
   # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
 
   # Select internationalisation properties.
-  i18n.defaultLocale = "en_US.UTF-8";
+  i18n.defaultLocale = "pt_BR.UTF-8";
   console = {
      font = "Lat2-Terminus16";
      keyMap = "dvorak";
@@ -108,6 +108,90 @@
      # timeshift
      fastfetch
      xorg.xinit
+     st
+     dmenu
+     tmux
+     tmuxp
+     xautolock
+     xbindkeys
+     arandr
+     numlockx
+     feh
+     unclutter
+     xclip
+     brightnessctl
+     ripgrep
+     fzf
+     lxsession # polkit agent to fill password when launching applications with my run launcher
+     flameshot
+     bat
+     dunst
+     qt5ct # To set theme for qt applications
+     csvkit
+     yamllint
+     ansible-lint
+     nodejs_22 # Necessary to install gramarly language server in neovim play
+     qutebrowser
+     unzip
+     mpv # Terminal based video player
+     yt-dlp # Download youtube videos, necessary to play youtube videos on mpv
+     pre-commit # To use with git to ensure format and linting before commits
+     xorg.xinput
+     pipenv
+     gnumake
+     util-linux
+     liberation_ttf
+     fd
+     libnotify
+     pamixer
+     nerdfonts
+     joypixels
+     libertine
+     arc-theme
+     clipmenu
+     noto-fonts
+     bleachbit
+     awscli
+     python312Packages.debugpy
+     spotify
+     trash-cli
+     nethogs
+     man-db
+     tldr
+     zoxide
+     wol
+     redshift
+     inetutils
+     ntfs3g
+     newsboat
+     python312Packages.adblock
+     libreoffice-qt6-still
+     noto-fonts-color-emoji
+     ncdu
+     delta
+     brave
+     dwmblocks
+     dwm-status
+     slock
+     stw
+     anki-bin
+     rsync
+     iwd
+     zathura
+     obsidian
+     sent
+     farbfeld
+     lf
+     preload
+     timeshift
+     tlp
+     smartmontools
+     ethtool
+     powertop
+     docker
+     docker-compose
+     dbeaver-bin
+     qutebrowser
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -227,5 +311,14 @@
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
+
+  # Enable dwm
+  services.xserver.windowManager.dwm.enable = true;
+  services.xserver.windowManager.dwm.package = pkgs.dwm.overrideAttrs {
+    src = /home/frank/.config/dwm;
+  };
+
+  # Accept joypixels license
+  nixpkgs.config.joypixels.acceptLicense = true;
 
 }
