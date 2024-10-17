@@ -108,7 +108,20 @@
      # timeshift
      fastfetch
      xorg.xinit
-     st
+     (st.overrideAttrs (oldAttrs: rec {
+         patches = [
+           # Fetch them directly from `st.suckless.org`
+           (fetchpatch {
+             url = "https://st.suckless.org/patches/alpha/st-alpha-20220206-0.8.5.diff";
+             sha256 = "10gvwnpbjw49212k25pddji08f4flal0g9rkwpvkay56w8y81r22";
+           })
+         ];
+         # configFile = writeText "config.def.h" (builtins.readFile /home/frank/.config/st/config.h);
+         configFile = writeText "config.def.h" (builtins.readFile "${builtins.fetchTarball { 
+	   url = "https://github.com/andre-gonzalez/st/archive/main.tar.gz"; 
+	 }}/config.h");
+         postPatch = "${oldAttrs.postPatch}\n cp ${configFile} config.def.h";
+       })) 
      dmenu
      tmux
      tmuxp
