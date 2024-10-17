@@ -6,7 +6,8 @@
 
 {
   imports =
-    [ # Include the results of the hardware scan.
+    [
+      # Include the results of the hardware scan.
       ./hardware-configuration.nix
     ];
 
@@ -25,7 +26,7 @@
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
   networking = {
     hostName = "nixos"; # Define your hostname.
-    networkmanager.enable = true;  # Easiest to use and most distros use this by default.
+    networkmanager.enable = true; # Easiest to use and most distros use this by default.
     wireless.enable = false;
     # nameservers = ["1.1.1.1" "1.0.0.1"]
   };
@@ -40,8 +41,8 @@
   # Select internationalisation properties.
   i18n.defaultLocale = "pt_BR.UTF-8";
   console = {
-     font = "Lat2-Terminus16";
-     keyMap = "dvorak";
+    font = "Lat2-Terminus16";
+    keyMap = "dvorak";
     # useXkbConfig = true; # use xkb.options in tty.
   };
 
@@ -76,7 +77,7 @@
     home = "/home/frank/";
     extraGroups = [ "wheel" "networkmanager" ]; # Enable ‘sudo’ for the user.
     shell = pkgs.fish; # Set default user shell to fish
-    openssh.authorizedKeys.keys = ["ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINsYIPZvhFhETD4PfqryP/yVpVpRW0bYsrwvPxj5uz/R"];
+    openssh.authorizedKeys.keys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINsYIPZvhFhETD4PfqryP/yVpVpRW0bYsrwvPxj5uz/R" ];
     packages = with pkgs; [
       firefox
       tree
@@ -91,131 +92,131 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-     neovim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
-     wget
-     cron
-     ansible
-     fail2ban
-     pam_tmpdir
-     chkrootkit
-     passwdqc
-     aide
-     sysstat
-     git
-     tailscale
-     # btrfs-assistant
-     # btrfs-auto-snapshot
-     # timeshift
-     fastfetch
-     xorg.xinit
-     (st.overrideAttrs (oldAttrs: rec {
-         patches = [
-           # Fetch them directly from `st.suckless.org`
-           (fetchpatch {
-             url = "https://st.suckless.org/patches/alpha/st-alpha-20220206-0.8.5.diff";
-             sha256 = "10gvwnpbjw49212k25pddji08f4flal0g9rkwpvkay56w8y81r22";
-           })
-         ];
-         # configFile = writeText "config.def.h" (builtins.readFile /home/frank/.config/st/config.h);
-         configFile = writeText "config.def.h" (builtins.readFile "${builtins.fetchTarball { 
-	   url = "https://github.com/andre-gonzalez/st/archive/main.tar.gz"; 
+    neovim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+    wget
+    cron
+    ansible
+    fail2ban
+    pam_tmpdir
+    chkrootkit
+    passwdqc
+    aide
+    sysstat
+    git
+    tailscale
+    # btrfs-assistant
+    # btrfs-auto-snapshot
+    # timeshift
+    fastfetch
+    xorg.xinit
+    (st.overrideAttrs (oldAttrs: rec {
+      patches = [
+        # Fetch them directly from `st.suckless.org`
+        (fetchpatch {
+          url = "https://st.suckless.org/patches/alpha/st-alpha-20220206-0.8.5.diff";
+          sha256 = "10gvwnpbjw49212k25pddji08f4flal0g9rkwpvkay56w8y81r22";
+        })
+      ];
+      # configFile = writeText "config.def.h" (builtins.readFile /home/frank/.config/st/config.h);
+      configFile = writeText "config.def.h" (builtins.readFile "${builtins.fetchTarball {
+	   url = "https://github.com/andre-gonzalez/st/archive/main.tar.gz";
 	 }}/config.h");
-         postPatch = "${oldAttrs.postPatch}\n cp ${configFile} config.def.h";
-       })) 
-     (dmenu.overrideAttrs (oldAttrs: rec {
+      postPatch = "${oldAttrs.postPatch}\n cp ${configFile} config.def.h";
+    }))
+    (dmenu.overrideAttrs (oldAttrs: rec {
       src = builtins.fetchTarball {
         url = "https://github.com/andre-gonzalez/dmenu/archive/main.tar.gz";
-     };
-     }))
-     (dwmblocks.overrideAttrs (oldAttrs: rec {
-         # configFile = writeText "config.def.h" (builtins.readFile /home/frank/.config/dwmblocks/config.h);
-         configFile = writeText "config.def.h" (builtins.readFile "${builtins.fetchTarball { 
-	   url = "https://github.com/andre-gonzalez/dwmblocks/archive/main.tar.gz"; 
+      };
+    }))
+    (dwmblocks.overrideAttrs (oldAttrs: rec {
+      # configFile = writeText "config.def.h" (builtins.readFile /home/frank/.config/dwmblocks/config.h);
+      configFile = writeText "config.def.h" (builtins.readFile "${builtins.fetchTarball {
+	   url = "https://github.com/andre-gonzalez/dwmblocks/archive/main.tar.gz";
 	 }}/config.h");
-         postPatch = "${oldAttrs.postPatch}\n cp ${configFile} config.def.h";
-       })) 
-     lf
-     slock
-     tmux
-     tmuxp
-     xautolock
-     xbindkeys
-     arandr
-     numlockx
-     feh
-     unclutter
-     xclip
-     brightnessctl
-     ripgrep
-     fzf
-     lxsession # polkit agent to fill password when launching applications with my run launcher
-     flameshot
-     bat
-     dunst
-     qt5ct # To set theme for qt applications
-     csvkit
-     yamllint
-     ansible-lint
-     nodejs_22 # Necessary to install gramarly language server in neovim play
-     qutebrowser
-     unzip
-     mpv # Terminal based video player
-     yt-dlp # Download youtube videos, necessary to play youtube videos on mpv
-     pre-commit # To use with git to ensure format and linting before commits
-     xorg.xinput
-     pipenv
-     gnumake
-     util-linux
-     liberation_ttf
-     fd
-     libnotify
-     pamixer
-     nerdfonts
-     joypixels
-     libertine
-     arc-theme
-     clipmenu
-     noto-fonts
-     bleachbit
-     awscli
-     python312Packages.debugpy
-     spotify
-     trash-cli
-     nethogs
-     man-db
-     tldr
-     zoxide
-     wol
-     redshift
-     inetutils
-     ntfs3g
-     newsboat
-     python312Packages.adblock
-     libreoffice-qt6-still
-     noto-fonts-color-emoji
-     ncdu
-     delta
-     brave
-     dwm-status
-     stw
-     anki-bin
-     rsync
-     iwd
-     zathura
-     obsidian
-     sent
-     farbfeld
-     preload
-     timeshift
-     tlp
-     smartmontools
-     ethtool
-     powertop
-     docker
-     docker-compose
-     dbeaver-bin
-     qutebrowser
-     xcompmgr
+      postPatch = "${oldAttrs.postPatch}\n cp ${configFile} config.def.h";
+    }))
+    lf
+    slock
+    tmux
+    tmuxp
+    xautolock
+    xbindkeys
+    arandr
+    numlockx
+    feh
+    unclutter
+    xclip
+    brightnessctl
+    ripgrep
+    fzf
+    lxsession # polkit agent to fill password when launching applications with my run launcher
+    flameshot
+    bat
+    dunst
+    qt5ct # To set theme for qt applications
+    csvkit
+    yamllint
+    ansible-lint
+    nodejs_22 # Necessary to install gramarly language server in neovim play
+    qutebrowser
+    unzip
+    mpv # Terminal based video player
+    yt-dlp # Download youtube videos, necessary to play youtube videos on mpv
+    pre-commit # To use with git to ensure format and linting before commits
+    xorg.xinput
+    pipenv
+    gnumake
+    util-linux
+    liberation_ttf
+    fd
+    libnotify
+    pamixer
+    nerdfonts
+    joypixels
+    libertine
+    arc-theme
+    clipmenu
+    noto-fonts
+    bleachbit
+    awscli
+    python312Packages.debugpy
+    spotify
+    trash-cli
+    nethogs
+    man-db
+    tldr
+    zoxide
+    wol
+    redshift
+    inetutils
+    ntfs3g
+    newsboat
+    python312Packages.adblock
+    libreoffice-qt6-still
+    noto-fonts-color-emoji
+    ncdu
+    delta
+    brave
+    dwm-status
+    stw
+    anki-bin
+    rsync
+    iwd
+    zathura
+    obsidian
+    sent
+    farbfeld
+    preload
+    timeshift
+    tlp
+    smartmontools
+    ethtool
+    powertop
+    docker
+    docker-compose
+    dbeaver-bin
+    qutebrowser
+    xcompmgr
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -230,20 +231,20 @@
 
   # Enable the OpenSSH daemon.
   services.openssh = {
-     enable = true;
-     ports = [1050];
-     settings.PermitRootLogin = "no";
-     settings.PasswordAuthentication = false;
-     settings.ClientAliveCountMax = 2;
-     settings.TCPKeepAlive = "no";
-     settings.LogLevel = "VERBOSE";
-     settings.AllowUsers = ["frank"];
-     settings.PermitEmptyPasswords = "no";
-     settings.MaxAuthTries = 3;
-     settings.X11Forwarding = false;
-     settings.MaxSessions = 2;
-     settings.AllowTcpForwarding = "no";
-     settings.AllowAgentForwarding = "no";
+    enable = true;
+    ports = [ 1050 ];
+    settings.PermitRootLogin = "no";
+    settings.PasswordAuthentication = false;
+    settings.ClientAliveCountMax = 2;
+    settings.TCPKeepAlive = "no";
+    settings.LogLevel = "VERBOSE";
+    settings.AllowUsers = [ "frank" ];
+    settings.PermitEmptyPasswords = "no";
+    settings.MaxAuthTries = 3;
+    settings.X11Forwarding = false;
+    settings.MaxSessions = 2;
+    settings.AllowTcpForwarding = "no";
+    settings.AllowAgentForwarding = "no";
   };
 
   # Open ports in the firewall.
@@ -294,7 +295,7 @@
   # Configure fail2ban
   services.fail2ban = {
     enable = false;
-    ignoreIP = ["127.0.0.1/8"];
+    ignoreIP = [ "127.0.0.1/8" ];
     bantime = "3600";
     jails = {
       findtime = "600";
@@ -323,12 +324,12 @@
   #   enable = true;
   #   userName = "André Gonzalez";
   #   userEmail = "lopescg@gmail.com";
-    # aliases = {
-    #   ga = "add";
-    #   gc = "commit";
-    #   gp = "push";
-    #   gs = "status";
-    # };
+  # aliases = {
+  #   ga = "add";
+  #   gc = "commit";
+  #   gp = "push";
+  #   gs = "status";
+  # };
   # };
 
   # Configure home manager to create directories
