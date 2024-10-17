@@ -345,4 +345,6 @@
   # Accept joypixels license
   nixpkgs.config.joypixels.acceptLicense = true;
 
+  # Enable slock
+  programs.slock.enable = true;
 }
