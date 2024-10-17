@@ -122,7 +122,13 @@
 	 }}/config.h");
          postPatch = "${oldAttrs.postPatch}\n cp ${configFile} config.def.h";
        })) 
-     dmenu
+    (dmenu.overrideAttrs (oldAttrs: rec {
+    # If you want it to be always up to date use fetchTarball instead of fetchFromGitHub
+     src = builtins.fetchTarball {
+       url = "https://github.com/andre-gonzalez/dmenu/archive/main.tar.gz";
+    };
+    }))
+
      tmux
      tmuxp
      xautolock
