@@ -111,7 +111,7 @@
     tailscale
     # btrfs-assistant
     # btrfs-auto-snapshot
-    # timeshift
+    timeshift
     fastfetch
     xorg.xinit
     (st.overrideAttrs (oldAttrs: rec {
@@ -212,7 +212,6 @@
     sent
     farbfeld
     preload
-    timeshift
     tlp
     smartmontools
     ethtool
@@ -220,8 +219,8 @@
     docker
     docker-compose
     dbeaver-bin
-    qutebrowser
     xcompmgr
+    nil # Nix language server
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
