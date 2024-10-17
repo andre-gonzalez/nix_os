@@ -221,6 +221,8 @@
     dbeaver-bin
     xcompmgr
     nil # Nix language server
+    nixpkgs-fmt # Nix formatter
+    home-manager # Nix tool to manage home environment
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
