@@ -122,13 +122,20 @@
 	 }}/config.h");
          postPatch = "${oldAttrs.postPatch}\n cp ${configFile} config.def.h";
        })) 
-    (dmenu.overrideAttrs (oldAttrs: rec {
-    # If you want it to be always up to date use fetchTarball instead of fetchFromGitHub
-     src = builtins.fetchTarball {
-       url = "https://github.com/andre-gonzalez/dmenu/archive/main.tar.gz";
-    };
-    }))
-
+     (dmenu.overrideAttrs (oldAttrs: rec {
+      src = builtins.fetchTarball {
+        url = "https://github.com/andre-gonzalez/dmenu/archive/main.tar.gz";
+     };
+     }))
+     (dwmblocks.overrideAttrs (oldAttrs: rec {
+         # configFile = writeText "config.def.h" (builtins.readFile /home/frank/.config/dwmblocks/config.h);
+         configFile = writeText "config.def.h" (builtins.readFile "${builtins.fetchTarball { 
+	   url = "https://github.com/andre-gonzalez/dwmblocks/archive/main.tar.gz"; 
+	 }}/config.h");
+         postPatch = "${oldAttrs.postPatch}\n cp ${configFile} config.def.h";
+       })) 
+     lf
+     slock
      tmux
      tmuxp
      xautolock
@@ -189,9 +196,7 @@
      ncdu
      delta
      brave
-     dwmblocks
      dwm-status
-     slock
      stw
      anki-bin
      rsync
@@ -200,7 +205,6 @@
      obsidian
      sent
      farbfeld
-     lf
      preload
      timeshift
      tlp
