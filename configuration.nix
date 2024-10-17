@@ -47,12 +47,17 @@
   };
 
   # Enable the X11 windowing system.
-  services.xserver.enable = true;
+  services.xserver = {
+    enable = true;
+    # Configure keymap in X11
+    xkb.layout = "us";
+    xkb.variant = "dvorak-intl";
+    xkb.options = "caps:swapescape";
+    displayManager = {
+      startx.enable = true;
+    };
+  };
 
-  # Configure keymap in X11
-  services.xserver.xkb.layout = "us";
-  services.xserver.xkb.variant = "dvorak-intl";
-  services.xserver.xkb.options = "caps:swapescape";
 
   # Enable CUPS to print documents.
   # services.printing.enable = true;
