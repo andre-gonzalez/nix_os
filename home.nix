@@ -101,4 +101,31 @@
     enable = true;
   };
 
+  #  programs.tmux = {
+  #    enable = true;
+  #	baseIndex = 1;
+  #	clock24 = true;
+  #	escapeTime = 10;
+  #	mouse = true;
+  #	prefix = "C-q";
+  #	shell = "/${pkgs.fish}/bin/fish";
+  #	tmuxp.enable = true;
+  #  };
+
+  xdg.mimeApps.defaultApplications = {
+    "text/html" = "brave-browser.desktop";
+    "x-scheme-handler/http" = "brave-browser.desktop";
+    "x-scheme-handler/https" = "brave-browser.desktop";
+    "x-scheme-handler/about" = "brave-browser.desktop";
+    "x-scheme-handler/unknown" = "brave-browser.desktop";
+    "image/jpeg" = "feh";
+    "image/png" = "feh";
+    "image/svg+xml" = "feh";
+    "image/webp" = "feh";
+    "video/mp4" = "feh";
+    "video/mpeg" = "brave-browser.desktop";
+    "video/webm" = "mpv";
+    "application/pdf" = "zathura";
+  };
+
 }
