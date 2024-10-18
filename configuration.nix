@@ -348,4 +348,6 @@ url = "https://github.com/andre-gonzalez/dwmblocks/archive/main.tar.gz";
   # Disable core dumps
   systemd.coredump.enable = false;
 
+  nix.settings.allowed-users = [ "frank" ];
+
 }
