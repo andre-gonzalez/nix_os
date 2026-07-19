@@ -5,9 +5,9 @@ stdenv.mkDerivation {
   version = "unstable";
 
   src = builtins.fetchGit {
-    url = "git@github.com:andre-gonzalez/dwm.git";
+    url = "https://github.com/andre-gonzalez/dwm.git";
     ref = "ultra-wide-dwm";
-    # rev = "abc123...";
+    rev = "423518f4ef3845684b3182abb9da3a1c0895dca9";
   };
 
   buildInputs = with xorg; [ libX11 libXft libXinerama ];

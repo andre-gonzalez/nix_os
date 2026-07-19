@@ -24,10 +24,13 @@
     # home.file.".config/msmtp/config".source = config.age.secrets.msmtp.path;
   };
 
-  # notmuch for email indexing (used by neomutt notmuch integration)
-  programs.notmuch = {
-    enable = true;
-  };
+  # notmuch for email indexing (used by neomutt notmuch integration).
+  # Disabled for now: home-manager's notmuch module requires an
+  # `accounts.email.accounts.<name>` with realName + address. Enable this
+  # together with the agenix mail secrets and a defined email account.
+  # programs.notmuch = {
+  #   enable = true;
+  # };
 
   home.packages = with pkgs; [
     w3m         # HTML mail rendering

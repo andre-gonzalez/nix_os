@@ -5,9 +5,9 @@ stdenv.mkDerivation {
   version = "unstable";
 
   src = builtins.fetchGit {
-    url = "git@github.com:andre-gonzalez/dwmblocks.git";
+    url = "https://github.com/andre-gonzalez/dwmblocks.git";
     ref = "main";
-    # rev = "abc123...";
+    rev = "14e1110b408fc97c1fb32c2f84515eeb8eca377f";
   };
 
   buildInputs = [ xorg.libX11 ];

@@ -6,10 +6,12 @@
     dnssec = "allow-downgrade";
     # Cloudflare family DNS (no malware/adult content) — mirrors /etc/resolv.conf
     fallbackDns = [ "1.1.1.3" "1.0.0.3" ];
-    extraConfig = ''
-      DNS=1.1.1.3 1.0.0.3
-      DNSOverTLS=opportunistic
-    '';
+    # `extraConfig` was removed; use structured settings (maps to the
+    # [Resolve] section of resolved.conf).
+    settings.Resolve = {
+      DNS = "1.1.1.3 1.0.0.3";
+      DNSOverTLS = "opportunistic";
+    };
   };
 
   # Disable static resolv.conf so systemd-resolved manages it

@@ -4,7 +4,7 @@
   environment.systemPackages = with pkgs; [
     # Core tools
     git
-    git-delta
+    delta          # was git-delta (renamed to delta in nixpkgs)
     btop
     htop
     wget
@@ -29,7 +29,7 @@
     pciutils
     lshw
     sysstat
-    rkhunter
+    # rkhunter removed from nixpkgs (see security.nix note)
     inetutils
     wol
     ntfs3g
@@ -75,4 +75,6 @@
 
   # Allow unfree packages (1password, spotify, etc.)
   nixpkgs.config.allowUnfree = true;
+  # JoyPixels ships under a non-free license that must be accepted explicitly.
+  nixpkgs.config.joypixels.acceptLicense = true;
 }

@@ -1,6 +1,15 @@
 # Mirrors roles/light_workstation — xorg, startx, autologin to tty1
-{ pkgs, ... }:
+{ pkgs, customPkgs, ... }:
 {
+  # slock needs setuid root for PAM auth. The package build strips its own
+  # chmod u+s (sandbox-incompatible); grant it here via a setuid wrapper.
+  security.wrappers.slock = {
+    setuid = true;
+    owner = "root";
+    group = "root";
+    source = "${customPkgs.slock}/bin/slock";
+  };
+
   services.xserver = {
     enable = true;
 
@@ -23,7 +32,7 @@
 
   # Polkit agent for GUI privilege elevation
   environment.systemPackages = with pkgs; [
-    lxde.lxsession
+    lxsession
     xorg.xsetroot
     xorg.xrandr
     xorg.xinput

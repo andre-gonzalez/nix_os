@@ -56,7 +56,8 @@
 
   # Additional hardening packages
   environment.systemPackages = with pkgs; [
-    rkhunter
+    # rkhunter was removed from nixpkgs. For rootkit/host auditing consider
+    # `lynis` or `aide` (both still packaged) instead.
     sysstat
   ];
 }

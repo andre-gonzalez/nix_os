@@ -5,18 +5,20 @@ stdenv.mkDerivation {
   version = "unstable";
 
   src = builtins.fetchGit {
-    url = "git@github.com:andre-gonzalez/slock.git";
+    url = "https://github.com/andre-gonzalez/slock.git";
     ref = "main";
-    # rev = "abc123...";
+    rev = "b26f83911e6a601d4cba11d48e5051c5cec3d696";
   };
 
   buildInputs = with xorg; [ libX11 libXext libXrandr pam ];
 
   makeFlags = [ "PREFIX=$(out)" ];
 
-  # slock requires setuid root for PAM auth
-  postInstall = ''
-    chmod u+s $out/bin/slock
+  # The Makefile's install target runs `chmod u+s`, which fails in the Nix
+  # sandbox. Strip it here — setuid is granted at runtime via
+  # security.wrappers.slock (see modules/nixos/desktop/xorg.nix).
+  postPatch = ''
+    substituteInPlace Makefile --replace-quiet "chmod u+s" "true"
   '';
 
   meta = {

@@ -12,7 +12,7 @@
       # LSP servers
       lua-language-server
       nil             # Nix LSP
-      nodePackages.typescript-language-server
+      typescript-language-server
       pyright
       terraform-ls
 

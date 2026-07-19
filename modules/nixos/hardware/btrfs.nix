@@ -4,10 +4,10 @@
 {
   boot.supportedFilesystems = [ "btrfs" ];
 
-  # grub-btrfs: inject snapshot boot entries into GRUB
-  services.grub-btrfs = {
-    enable = true;
-  };
+  # NOTE: grub-btrfs (which injected snapshot boot entries into GRUB) was
+  # removed from nixpkgs-unstable — both the `services.grub-btrfs` module and
+  # the package no longer exist. Snapper snapshots/rollback below still work
+  # from a running system; there is just no snapshot boot menu in GRUB.
 
   # Auto-scrub btrfs filesystems monthly
   services.btrfs.autoScrub = {

@@ -1,14 +1,18 @@
 # st — simple terminal from andre-gonzalez's private repo
-{ stdenv, lib, xorg, harfbuzz, fontconfig, freetype }:
+{ stdenv, lib, xorg, harfbuzz, fontconfig, freetype, ncurses }:
 stdenv.mkDerivation {
   pname = "st";
   version = "unstable";
 
   src = builtins.fetchGit {
-    url = "git@github.com:andre-gonzalez/st.git";
+    url = "https://github.com/andre-gonzalez/st.git";
     ref = "main";
-    # rev = "abc123...";
+    rev = "5f84391724811c1bf6b5d5c58b01659c44f54882";
   };
+
+  # ncurses provides `tic`, used by the Makefile's install target to compile
+  # the st terminfo entry.
+  nativeBuildInputs = [ ncurses ];
 
   buildInputs = with xorg; [
     libX11 libXft
@@ -16,6 +20,14 @@ stdenv.mkDerivation {
   ];
 
   makeFlags = [ "PREFIX=$(out)" ];
+
+  # The Makefile's install runs `tic` to compile the terminfo entry; by default
+  # it writes to $HOME/.terminfo, which doesn't exist in the sandbox. Direct it
+  # into $out instead.
+  preInstall = ''
+    export TERMINFO=$out/share/terminfo
+    mkdir -p $TERMINFO
+  '';
 
   meta = {
     description = "suckless simple terminal — customised build";

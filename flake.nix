@@ -50,6 +50,7 @@
             # nixos-hardware.nixosModules.samsung-galaxy-book  # uncomment closest match
             home-manager.nixosModules.home-manager
             agenix.nixosModules.default
+            disko.nixosModules.disko
           ];
         };
       };

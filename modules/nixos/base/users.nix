@@ -5,12 +5,9 @@
     isNormalUser = true;
     extraGroups = [ "wheel" "adm" "audio" "video" "docker" "libvirtd" "audit" ];
     shell = pkgs.fish;
-    # SSH keys fetched from GitHub; commit the fetched file or use fetchurl at build time
-    openssh.authorizedKeys.keyFiles = [
-      # (pkgs.fetchurl {
-      #   url = "https://github.com/andre-gonzalez.keys";
-      #   sha256 = "...";
-      # })
+    openssh.authorizedKeys.keys = [
+      # personal_id_ed25519_2023-11 — used for login after install
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINsYIPZvhFhETD4PfqryP/yVpVpRW0bYsrwvPxj5uz/R personal_id_ed25519_2023-11"
     ];
   };
 

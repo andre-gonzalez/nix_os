@@ -8,8 +8,8 @@
       # Noto family (mirrors noto-fonts-* on Arch)
       noto-fonts
       noto-fonts-cjk-sans
-      noto-fonts-emoji
-      noto-fonts-extra
+      noto-fonts-color-emoji   # was noto-fonts-emoji (renamed)
+      # noto-fonts-extra was dropped from nixpkgs
 
       # Liberation fonts (ttf-liberation on Arch)
       liberation_ttf
@@ -18,15 +18,13 @@
       dejavu_fonts
 
       # Linux Libertine (ttf-linux-libertine on Arch)
-      linux-libertine
+      libertine                # was linux-libertine (renamed)
 
-      # Nerd Fonts symbols (ttf-nerd-fonts-symbols on Arch)
-      (nerdfonts.override { fonts = [
-        "NerdFontsSymbolsOnly"
-        "JetBrainsMono"
-        "FiraCode"
-        "Hack"
-      ]; })
+      # Nerd Fonts — nerdfonts.override was replaced by split nerd-fonts.* pkgs
+      nerd-fonts.symbols-only
+      nerd-fonts.jetbrains-mono
+      nerd-fonts.fira-code
+      nerd-fonts.hack
 
       # JoyPixels emoji (ttf-joypixels on Arch)
       joypixels

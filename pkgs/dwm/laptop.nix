@@ -6,10 +6,10 @@ stdenv.mkDerivation {
   version = "unstable";
 
   src = builtins.fetchGit {
-    url = "git@github.com:andre-gonzalez/dwm.git";
-    ref = "laptop-dwm";
-    # Pin to a commit for reproducibility — update with `nix flake update`:
-    # rev = "abc123...";
+    url = "https://github.com/andre-gonzalez/dwm.git";
+    ref = "main";
+    # Pinned for reproducible pure eval. Update by bumping this rev.
+    rev = "976b60423b8f93952f3570dc13cccd1d4d2da4dc";
   };
 
   buildInputs = [ xorg.libX11 xorg.libXft xorg.libXinerama ];

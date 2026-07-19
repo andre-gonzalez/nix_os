@@ -5,9 +5,9 @@ stdenv.mkDerivation {
   version = "unstable";
 
   src = builtins.fetchGit {
-    url = "git@github.com:andre-gonzalez/dmenu.git";
+    url = "https://github.com/andre-gonzalez/dmenu.git";
     ref = "main";
-    # rev = "abc123...";
+    rev = "658e69fc7a5f4b8163afa7b056895963e2e6d380";
   };
 
   buildInputs = with xorg; [ libX11 libXft libXinerama ];

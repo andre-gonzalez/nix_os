@@ -20,10 +20,9 @@
       ClientAliveCountMax = 2;
       TCPKeepAlive = false;
       LogLevel = "VERBOSE";
+      # Legal warning banner (`banner` was renamed to settings.Banner)
+      Banner = "/etc/issue.net";
     };
-
-    # Legal warning banner
-    banner = "/etc/issue.net";
 
     # Restrict login to frank only
     extraConfig = ''
