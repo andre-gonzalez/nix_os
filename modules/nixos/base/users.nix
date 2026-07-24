@@ -5,6 +5,7 @@
     isNormalUser = true;
     extraGroups = [ "wheel" "adm" "audio" "video" "docker" "libvirtd" "audit" ];
     shell = pkgs.fish;
+    hashedPassword = "$6$/5hXHW65FVy.OnGq$lSFIFDiR0yW4/mLT.nIOeT9VGP5HVXIcTwZKQ1xrvQslS35/3FJ95qWPCvDvKLWv0utRqxplpwGuS5G10U4kc1";
     openssh.authorizedKeys.keys = [
       # personal_id_ed25519_2023-11 — used for login after install
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINsYIPZvhFhETD4PfqryP/yVpVpRW0bYsrwvPxj5uz/R personal_id_ed25519_2023-11"

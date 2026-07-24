@@ -16,9 +16,11 @@
 
     # Fine-grained nftables rules
     extraInputRules = ''
-      # Allow SSH only from local network (mirrors UFW "limit from 192.168.0.0/24")
-      ip saddr 192.168.0.0/24 tcp dport 22 ct state new limit rate 6/minute accept
-      ip saddr 192.168.0.0/24 tcp dport 22 accept
+      # Allow SSH only from local network. Widened to 192.168.0.0/16 so it
+      # works across the various home LANs this laptop roams between
+      # (e.g. 192.168.100.0/24), not just 192.168.0.0/24.
+      ip saddr 192.168.0.0/16 tcp dport 22 ct state new limit rate 6/minute accept
+      ip saddr 192.168.0.0/16 tcp dport 22 accept
 
       # Drop ICMP echo requests (mirrors ufw/before.rules ping block)
       icmp type echo-request drop
