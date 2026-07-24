@@ -13,10 +13,13 @@
 
   networking.hostName = "samsung-expert";
 
-  # Broadcom WiFi driver (required for Samsung Expert Book)
-  boot.kernelModules = [ "wl" ];
-  boot.extraModulePackages = [ config.boot.kernelPackages.broadcom_sta ];
-  networking.wireless.enable = true; # use wpa_supplicant (or switch to iwd)
+  # WiFi: Qualcomm Atheros QCA9377 [168c:0042] — free, in-kernel ath10k_pci
+  # driver (auto-loads via PCI, no boot.kernelModules pin needed). It only
+  # needs the QCA firmware shipped in linux-firmware. This machine is NOT
+  # Broadcom — the old broadcom_sta / "wl" / permittedInsecurePackages config
+  # was carried over from the previous host and has been removed.
+  hardware.enableRedistributableFirmware = true;
+  networking.wireless.enable = true; # wpa_supplicant
 
   # WiFi credentials via agenix. The raw PSK lives in an age-encrypted file
   # decrypted at boot to config.age.secrets.wifi-queWifi2.path
@@ -25,16 +28,27 @@
   # Decryption uses the host key injected at install via --extra-files, so
   # the network is available on the very first boot — required because this
   # machine has no wired fallback.
-  age.secrets.wifi-queWifi2.file = ../../secrets/wifi-queWifi2.age;
+  age.secrets.wifi-queWifi2 = {
+    file = ../../secrets/wifi-queWifi2.age;
+    # NixOS runs wpa_supplicant as the unprivileged "wpa_supplicant" user under
+    # systemd hardening (not root), so the decrypted secret must be owned by it.
+    # Otherwise the service fails with:
+    #   EXT PW FILE: could not open file '/run/agenix/wifi-queWifi2': Permission denied
+    owner = "wpa_supplicant";
+    group = "wpa_supplicant";
+  };
   networking.wireless.secretsFile = config.age.secrets.wifi-queWifi2.path;
   networking.wireless.networks."QUEWIFI-5G".pskRaw = "ext:queWifi2_psk";
 
-  # broadcom_sta is flagged insecure by nixpkgs and must be permitted.
-  # NOTE: this string embeds the kernel version — if a kernel update changes
-  # the suffix, update it to the version shown in the build error.
-  nixpkgs.config.permittedInsecurePackages = [
-    "broadcom-sta-6.30.223.271-59-6.18.38"
-  ];
+  # Hybrid graphics: Intel UHD 620 (drives the laptop panel) + discrete NVIDIA
+  # MX110 [10de:174e]. nouveau was claiming /dev/dri/card0 (the NVIDIA GPU,
+  # which has NO connected outputs), so Xorg auto-selected it and died with
+  # "modeset(0): No modes / no screens found". We run dwm on the iGPU and do
+  # not use the dGPU, so disable nouveau — the Intel GPU then becomes card0 and
+  # Xorg drives the panel. (If PRIME offload for the dGPU is ever wanted, wire
+  # modules/nixos/hardware/nvidia.nix instead.)
+  boot.blacklistedKernelModules = [ "nouveau" "nvidiafb" ];
+  services.xserver.videoDrivers = [ "modesetting" ];
 
   # Mount points for internal drives.
   # NOTE: these partition UUIDs belong to the OLD machine. Re-add / update them
@@ -58,8 +72,14 @@
     useOSProber = false;
     default = "saved";
     timeout = 1;
+    # Samsung UEFI firmware does not reliably honor a custom NVRAM boot entry
+    # (symptom: "no bootable device", no GRUB menu). Install GRUB to the
+    # removable-media fallback path (\EFI\BOOT\BOOTX64.EFI), which firmware
+    # always tries. Mutually exclusive with canTouchEfiVariables, so that is
+    # set to false below.
+    efiInstallAsRemovable = true;
   };
-  boot.loader.efi.canTouchEfiVariables = true;
+  boot.loader.efi.canTouchEfiVariables = false;
   boot.loader.efi.efiSysMountPoint = "/boot/efi"; # matches disko-btrfs.nix ESP mount
 
   boot.kernelParams = [
