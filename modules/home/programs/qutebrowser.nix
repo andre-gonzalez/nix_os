@@ -1,38 +1,9 @@
-# Qutebrowser with Python ad-block (python-adblock on Arch)
+# Qutebrowser with Python ad-block
+# Config (~/.config/qutebrowser/config.py) is managed by the bare dotfiles repo,
+# so home-manager only installs the browser (no programs.qutebrowser config).
+# The nixpkgs qutebrowser already bundles the `adblock` python module, so the
+# python-adblock backend works out of the box.
 { pkgs, ... }:
 {
-  programs.qutebrowser = {
-    enable = true;
-
-    extraConfig = ''
-      # Enable adblock
-      c.content.blocking.enabled = True
-      c.content.blocking.method = 'both'
-      c.content.blocking.adblock.lists = [
-          'https://easylist.to/easylist/easylist.txt',
-          'https://easylist.to/easylist/easyprivacy.txt',
-          'https://secure.fanboy.co.nz/fanboy-cookiemonster.txt',
-      ]
-
-      # PDF handling via zathura
-      c.content.pdfjs = False
-
-      # Fonts
-      c.fonts.default_family = 'JetBrainsMono Nerd Font'
-      c.fonts.default_size = '11pt'
-
-      # Catppuccin Mocha color scheme
-      c.colors.webpage.preferred_color_scheme = 'dark'
-      c.colors.webpage.darkmode.enabled = True
-    '';
-
-    settings = {
-      editor.command = [ "st" "-e" "nvim" "{}" ];
-      downloads.location.directory = "~/Downloads";
-      content.javascript.enabled = true;
-    };
-  };
-
-  # python-adblock must be importable by qutebrowser
-  home.packages = [ pkgs.python3Packages.adblock ];
+  home.packages = [ pkgs.qutebrowser ];
 }

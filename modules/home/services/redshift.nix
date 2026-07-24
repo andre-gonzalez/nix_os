@@ -1,20 +1,9 @@
 # Redshift — color temperature / blue light filter
-{ ... }:
+# Config (~/.config/redshift/redshift.conf) is managed by the bare dotfiles repo
+# and redshift is launched from that repo's .xinitrc, so home-manager only
+# installs the binary (no services.redshift, which would generate the config
+# and a user service).
+{ pkgs, ... }:
 {
-  services.redshift = {
-    enable = true;
-    provider = "manual";
-    latitude  = "-23.5";   # São Paulo
-    longitude = "-46.6";
-    temperature = {
-      day   = 6500;
-      night = 3500;
-    };
-    settings = {
-      redshift = {
-        fade = 1;
-        gamma = "1.0";
-      };
-    };
-  };
+  home.packages = [ pkgs.redshift ];
 }

@@ -1,39 +1,8 @@
-# picom compositor — mirrors roles/light_workstation
-{ ... }:
+# picom compositor
+# Config (~/.config/picom/picom.conf) is managed by the bare dotfiles repo and
+# picom is launched from that repo's .xinitrc, so home-manager only installs the
+# binary (no services.picom, which would generate the config and a user service).
+{ pkgs, ... }:
 {
-  services.picom = {
-    enable = true;
-    backend = "glx";
-
-    # Shadows
-    shadow = true;
-    shadowOffsets = [ (-7) (-7) ];
-    shadowOpacity = 0.7;
-    shadowExclude = [
-      "name = 'Notification'"
-      "class_g = 'Conky'"
-      "_GTK_FRAME_EXTENTS@:c"
-    ];
-
-    # Fading
-    fade = true;
-    fadeSteps = [ 0.03 0.03 ];
-
-    # Opacity
-    activeOpacity = 1.0;
-    inactiveOpacity = 0.9;
-    menuOpacity = 1.0;
-    opacityRules = [
-      "100:class_g = 'dwm'"
-      "100:name = 'dwmblocks'"
-    ];
-
-    # VSync
-    vSync = true;
-
-    settings = {
-      # Rounded corners (picom >= 8)
-      corner-radius = 4;
-    };
-  };
+  home.packages = [ pkgs.picom ];
 }
