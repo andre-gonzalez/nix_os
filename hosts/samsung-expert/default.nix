@@ -18,6 +18,17 @@
   boot.extraModulePackages = [ config.boot.kernelPackages.broadcom_sta ];
   networking.wireless.enable = true; # use wpa_supplicant (or switch to iwd)
 
+  # WiFi credentials via agenix. The raw PSK lives in an age-encrypted file
+  # decrypted at boot to config.age.secrets.wifi-queWifi2.path
+  # (/run/agenix/wifi-queWifi2), which contains: queWifi2_psk=<64-hex-psk>.
+  # wpa_supplicant reads it through ext_password_backend (the "ext:" ref).
+  # Decryption uses the host key injected at install via --extra-files, so
+  # the network is available on the very first boot — required because this
+  # machine has no wired fallback.
+  age.secrets.wifi-queWifi2.file = ../../secrets/wifi-queWifi2.age;
+  networking.wireless.secretsFile = config.age.secrets.wifi-queWifi2.path;
+  networking.wireless.networks."QUEWIFI-5G".pskRaw = "ext:queWifi2_psk";
+
   # broadcom_sta is flagged insecure by nixpkgs and must be permitted.
   # NOTE: this string embeds the kernel version — if a kernel update changes
   # the suffix, update it to the version shown in the build error.
