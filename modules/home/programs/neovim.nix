@@ -1,45 +1,24 @@
-# Neovim — set as git editor; plugin management via nixpkgs or lazy.nvim
+# Neovim. Config (~/.config/nvim/, lazy.nvim plugin tree) is managed by the bare
+# dotfiles repo, so home-manager only installs neovim plus the LSP servers and
+# tools its plugins expect (no programs.neovim, which would generate init.lua).
 { pkgs, ... }:
 {
-  programs.neovim = {
-    enable = true;
-    defaultEditor = true;
-    viAlias = true;
-    vimAlias = true;
+  home.packages = with pkgs; [
+    neovim
 
-    # System-level language support packages
-    extraPackages = with pkgs; [
-      # LSP servers
-      lua-language-server
-      nil             # Nix LSP
-      typescript-language-server
-      pyright
-      terraform-ls
+    # LSP servers
+    lua-language-server
+    nil                # Nix LSP
+    typescript-language-server
+    pyright
+    terraform-ls
 
-      # Tools used by plugins
-      ripgrep
-      fd
-      tree-sitter
+    # Tools used by plugins
+    ripgrep
+    fd
+    tree-sitter
 
-      # Debugger adapter
-      python3Packages.debugpy
-    ];
-
-    # Let the dotfiles repo / lazy.nvim manage the full plugin tree (Option A).
-    # Plugins can be migrated here incrementally.
-    extraLuaConfig = ''
-      -- Bootstrap lazy.nvim if not present
-      local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-      if not vim.loop.fs_stat(lazypath) then
-        vim.fn.system({
-          "git", "clone", "--filter=blob:none",
-          "https://github.com/folke/lazy.nvim.git",
-          "--branch=stable", lazypath,
-        })
-      end
-      vim.opt.rtp:prepend(lazypath)
-
-      -- Remaining config lives in ~/.config/nvim/ (managed by dotfiles repo)
-    '';
-  };
+    # Debugger adapter
+    python3Packages.debugpy
+  ];
 }
