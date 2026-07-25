@@ -19,26 +19,36 @@
   # Broadcom — the old broadcom_sta / "wl" / permittedInsecurePackages config
   # was carried over from the previous host and has been removed.
   hardware.enableRedistributableFirmware = true;
-  networking.wireless.enable = true; # wpa_supplicant
 
-  # WiFi credentials via agenix. The raw PSK lives in an age-encrypted file
-  # decrypted at boot to config.age.secrets.wifi-queWifi2.path
-  # (/run/agenix/wifi-queWifi2), which contains: queWifi2_psk=<64-hex-psk>.
-  # wpa_supplicant reads it through ext_password_backend (the "ext:" ref).
-  # Decryption uses the host key injected at install via --extra-files, so
-  # the network is available on the very first boot — required because this
-  # machine has no wired fallback.
-  age.secrets.wifi-queWifi2 = {
-    file = ../../secrets/wifi-queWifi2.age;
-    # NixOS runs wpa_supplicant as the unprivileged "wpa_supplicant" user under
-    # systemd hardening (not root), so the decrypted secret must be owned by it.
-    # Otherwise the service fails with:
-    #   EXT PW FILE: could not open file '/run/agenix/wifi-queWifi2': Permission denied
-    owner = "wpa_supplicant";
-    group = "wpa_supplicant";
+  # WiFi via iwd (replaces wpa_supplicant; gives us `iwctl` for roaming). iwd
+  # lets its built-in DHCP client configure the link and hands DNS to
+  # systemd-resolved.
+  networking.wireless.iwd = {
+    enable = true;
+    settings = {
+      General.EnableNetworkConfiguration = true; # iwd runs DHCP
+      Network.NameResolvingService = "systemd";  # integrate with systemd-resolved
+    };
   };
-  networking.wireless.secretsFile = config.age.secrets.wifi-queWifi2.path;
-  networking.wireless.networks."QUEWIFI-5G".pskRaw = "ext:queWifi2_psk";
+
+  # Seed the home network as an iwd profile so the machine auto-connects headless
+  # on first boot (no wired fallback). agenix decrypts the profile (using the
+  # host key injected at install via --extra-files) directly to
+  # /var/lib/iwd/QUEWIFI-5G.psk — a real file (symlink = false) with 0600 perms,
+  # as iwd requires. Additional networks are added at runtime with `iwctl`.
+  systemd.tmpfiles.rules = [
+    # Ensure iwd's state dir exists before agenix places the profile in it
+    # (agenix runs during activation, before iwd.service creates StateDirectory).
+    "d /var/lib/iwd 0700 root root -"
+  ];
+  age.secrets."iwd-QUEWIFI-5G" = {
+    file = ../../secrets/iwd-QUEWIFI-5G.age;
+    path = "/var/lib/iwd/QUEWIFI-5G.psk";
+    mode = "0600";
+    owner = "root";
+    group = "root";
+    symlink = false; # iwd needs a real file with strict perms, not a symlink
+  };
 
   # Hybrid graphics: Intel UHD 620 (drives the laptop panel) + discrete NVIDIA
   # MX110 [10de:174e]. nouveau was claiming /dev/dri/card0 (the NVIDIA GPU,

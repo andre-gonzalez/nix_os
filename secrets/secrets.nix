@@ -29,11 +29,11 @@ in
   "ssh-port.age".publicKeys           = allHosts;
   "tailscale-authkey.age".publicKeys  = allHosts;
 
-  "wifi-lopes.age".publicKeys         = allHosts;
-  "wifi-lnam5.age".publicKeys         = allHosts;
-  # Only encrypted for samsung + frank (workstation key not yet populated).
-  "wifi-queWifi2.age".publicKeys      = [ samsung frank ];
-  "wifi-casaRio5g.age".publicKeys     = allHosts;
+  # iwd network profile, deployed to /var/lib/iwd/QUEWIFI-5G.psk so the machine
+  # auto-connects headless on first boot. Other networks are added at runtime
+  # with `iwctl` (iwd persists them in /var/lib/iwd). Encrypted for samsung +
+  # frank only (workstation host key not yet populated).
+  "iwd-QUEWIFI-5G.age".publicKeys     = [ samsung frank ];
 
   "aws-credentials.age".publicKeys    = [ workstation frank ];
 
