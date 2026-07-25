@@ -16,6 +16,12 @@ stdenv.mkDerivation {
 
   makeFlags = [ "PREFIX=$(out)" ];
 
+  # The upstream git branch commits a pre-built `dwm` binary (built for generic
+  # Linux). Without this, `make` sees it as up-to-date and installs that stale
+  # binary, which can't run on NixOS (wrong ELF interpreter / libs not found).
+  # `make clean` forces a real recompile from source against the store libs.
+  preBuild = "make clean";
+
   installPhase = ''
     mkdir -p $out/bin $out/share/man/man1
     cp dwm $out/bin/dwm-laptop

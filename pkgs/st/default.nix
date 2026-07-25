@@ -20,6 +20,8 @@ stdenv.mkDerivation {
   ];
 
   makeFlags = [ "PREFIX=$(out)" ];
+  preBuild = "make clean"; # upstream commits a prebuilt generic-Linux binary; force a real recompile
+  NIX_LDFLAGS = "-lfontconfig"; # st calls fontconfig directly; modern ld needs it explicit
 
   # The Makefile's install runs `tic` to compile the terminfo entry; by default
   # it writes to $HOME/.terminfo, which doesn't exist in the sandbox. Direct it

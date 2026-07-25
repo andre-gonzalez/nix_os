@@ -13,6 +13,7 @@ stdenv.mkDerivation {
   buildInputs = with xorg; [ libX11 libXft libXinerama ];
 
   makeFlags = [ "PREFIX=$(out)" ];
+  preBuild = "make clean"; # upstream commits a prebuilt generic-Linux binary; force a real recompile
 
   installPhase = ''
     mkdir -p $out/bin $out/share/man/man1

@@ -13,6 +13,7 @@ stdenv.mkDerivation {
   buildInputs = [ xorg.libX11 ];
 
   makeFlags = [ "PREFIX=$(out)" ];
+  preBuild = "make clean"; # upstream commits a prebuilt generic-Linux binary; force a real recompile
 
   meta = {
     description = "modular status bar for dwm";

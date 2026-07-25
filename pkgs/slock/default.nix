@@ -1,5 +1,5 @@
 # slock — simple screen locker from andre-gonzalez's private repo
-{ stdenv, lib, xorg, pam }:
+{ stdenv, lib, xorg, pam, libxcrypt }:
 stdenv.mkDerivation {
   pname = "slock";
   version = "unstable";
@@ -10,9 +10,10 @@ stdenv.mkDerivation {
     rev = "b26f83911e6a601d4cba11d48e5051c5cec3d696";
   };
 
-  buildInputs = with xorg; [ libX11 libXext libXrandr pam ];
+  buildInputs = with xorg; [ libX11 libXext libXrandr pam libxcrypt ];
 
   makeFlags = [ "PREFIX=$(out)" ];
+  preBuild = "make clean"; # upstream commits a prebuilt generic-Linux binary; force a real recompile
 
   # The Makefile's install target runs `chmod u+s`, which fails in the Nix
   # sandbox. Strip it here — setuid is granted at runtime via
