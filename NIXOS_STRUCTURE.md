@@ -7,7 +7,7 @@
 | `flake.nix` | Root: inputs (nixpkgs-unstable, home-manager, agenix, disko, nixos-hardware), both host configs, custom package exports |
 | `hosts/workstation/` | Desktop host — imports base + desktop + btrfs + docker + tailscale + libvirt + home-manager |
 | `hosts/samsung-expert/` | Laptop host — imports base + desktop + intel + power + tailscale; Broadcom WiFi + drive mounts |
-| `modules/nixos/base/` | users, locale (Dvorak/São Paulo), packages, ssh hardening, AppArmor/fail2ban/auditd, nftables firewall, network/resolved, fish |
+| `modules/nixos/base/` | users, locale (Dvorak/São Paulo), packages, ssh hardening, AppArmor/fail2ban/auditd, nftables firewall, network/resolved, fish, SSD-gated fstrim |
 | `modules/nixos/desktop/` | xorg (startx/autologin), pipewire, bluetooth, fonts (Noto/Nerd/JoyPixels), autorandr |
 | `modules/nixos/hardware/` | intel VA-API, nvidia-open, btrfs+snapper+grub-btrfs, TLP power |
 | `modules/nixos/services/` | tailscale, docker, snapper, preload |

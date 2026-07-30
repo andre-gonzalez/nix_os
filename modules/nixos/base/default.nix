@@ -9,5 +9,6 @@
     ./network.nix
     ./firewall.nix
     ./fish.nix
+    ./fstrim.nix
   ];
 }
