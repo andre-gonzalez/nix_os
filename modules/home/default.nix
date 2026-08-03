@@ -25,6 +25,7 @@
     ./programs/calibre.nix
     ./programs/zoxide.nix
 
+    ./work/fonts.nix
     ./work/neomutt.nix
     ./work/aws.nix
     ./work/datagrip.nix
