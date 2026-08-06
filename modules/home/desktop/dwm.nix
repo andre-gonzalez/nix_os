@@ -1,13 +1,10 @@
-# Custom dwm build from andre-gonzalez's private git branches
-# pkgs/dwm/ contains the derivations; this module wires the right variant
-# into the user's PATH and sets up .xinitrc to launch it.
+# Custom dwm build from andre-gonzalez's dwm repo (single `main` branch).
+# pkgs/dwm/ contains the derivation; this module puts it on the user's PATH.
 { customPkgs, pkgs, lib, ... }:
 {
-  home.packages = [
-    # Include both builds; the correct one is chosen by the .xinitrc / autorandr hook
-    customPkgs.dwm-laptop
-    customPkgs.dwm-ultrawide
-  ];
+  # One binary for every screen — the ultra-wide layout is picked at runtime
+  # from the monitor width, so no per-host variant or autorandr hook is needed.
+  home.packages = [ customPkgs.dwm ];
 
   # .xinitrc — launches dwmblocks + dwm (keep in sync with dotfiles repo)
   # When dotfiles are fully migrated to Home Manager this file can move here.

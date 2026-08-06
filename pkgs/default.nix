@@ -2,8 +2,7 @@
 # Usage: import ./pkgs { inherit pkgs; lib = nixpkgs.lib; }
 { pkgs, lib }:
 {
-  dwm-laptop    = pkgs.callPackage ./dwm/laptop.nix     {};
-  dwm-ultrawide = pkgs.callPackage ./dwm/ultrawide.nix  {};
+  dwm           = pkgs.callPackage ./dwm/default.nix    {};
   st            = pkgs.callPackage ./st/default.nix      {};
   dmenu         = pkgs.callPackage ./dmenu/default.nix   {};
   slock         = pkgs.callPackage ./slock/default.nix   {};
