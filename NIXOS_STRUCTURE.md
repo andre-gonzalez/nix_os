@@ -13,7 +13,7 @@
 | `modules/nixos/services/` | tailscale, docker, snapper, preload |
 | `modules/nixos/virtualization/` | libvirtd+KVM, windows-vm stub |
 | `modules/home/` | Full Home Manager: fish/tmux, all desktop tools, neovim/git/zathura/mpv/qutebrowser/newsboat/lf/zoxide, work tools, services |
-| `pkgs/` | Custom derivations for dwm (laptop+ultrawide), st, dmenu, slock, dwmblocks, dwmstatus, wall-d, notas, stw |
+| `pkgs/` | Custom derivations for dwm, st, dmenu, slock, dwmblocks, dwmstatus, wall-d, notas, stw |
 | `overlays/` | Package overrides/pins |
 | `secrets/secrets.nix` | agenix manifest with placeholders for all secrets from the plan |
 

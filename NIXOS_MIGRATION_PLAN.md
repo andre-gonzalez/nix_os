@@ -120,9 +120,7 @@ nixos-config/
 │
 ├── pkgs/                              # Custom package derivations
 │   ├── default.nix                    # Exports all custom packages
-│   ├── dwm/                           # dwm builds
-│   │   ├── laptop.nix                 # laptop-dwm branch build
-│   │   └── ultrawide.nix              # ultra-wide-dwm branch build
+│   ├── dwm/default.nix                # dwm build (single `main` branch)
 │   ├── st/default.nix                 # st build from your repo
 │   ├── dmenu/default.nix
 │   ├── slock/default.nix
@@ -394,15 +392,15 @@ Each suckless tool (dwm, st, dmenu, slock) is built by pointing `src` at your
 private GitHub repository and applying the same patches. Example for dwm:
 
 ```nix
-# pkgs/dwm/laptop.nix
+# pkgs/dwm/default.nix
 { stdenv, lib, fetchgit, xorg, ... }:
 stdenv.mkDerivation {
-  pname = "dwm-laptop";
+  pname = "dwm";
   version = "unstable";
   src = fetchgit {
     url = "git@github.com:andre-gonzalez/dwm.git";
     rev = "HEAD";               # or pin to a specific commit
-    branchName = "laptop-dwm";
+    branchName = "main";        # one branch serves every screen
     fetchSubmodules = false;
     sha256 = lib.fakeSha256;    # run nix build once to get real hash
   };
@@ -703,10 +701,10 @@ boot.kernelParams = [
 - [ ] `modules/home/services/` — redshift, rclone, syncthing
 
 ### Phase 4 — Suckless custom builds
-- [ ] Write `pkgs/dwm/laptop.nix` pointing to your github branch
+- [ ] Write `pkgs/dwm/default.nix` pointing to your github `main` branch
 - [ ] Same for st, dmenu, slock, dwmblocks
 - [ ] Integrate into home manager packages list
-- [ ] Verify builds succeed with `nix build .#packages.x86_64-linux.dwm-laptop`
+- [ ] Verify builds succeed with `nix build .#packages.x86_64-linux.dwm`
 
 ### Phase 5 — Work configuration
 - [ ] `modules/home/work/` — neomutt, aws, datagrip, cursor, onepassword, slack
