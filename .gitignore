@@ -1,0 +1,11 @@
+# Keep plaintext secrets and private keys out of git, but DO track the
+# encrypted *.age files and the agenix rules file — the flake build copies
+# only git-tracked files into the store, so age.secrets.*.file paths must
+# be tracked or nixos-anywhere fails with "path does not exist".
+secrets/*
+!secrets/*.age
+!secrets/secrets.nix
+
+# nixos-anywhere --extra-files staging: contains the pre-generated private
+# host key. Never commit this.
+.extra-files/

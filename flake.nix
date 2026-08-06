@@ -1,19 +1,60 @@
 {
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-  inputs.disko.url = "github:nix-community/disko";
-  inputs.disko.inputs.nixpkgs.follows = "nixpkgs";
-  inputs.nixos-facter-modules.url = "github:numtide/nixos-facter-modules";
+  description = "André Gonzalez – NixOS configuration";
 
-  outputs = { nixpkgs, disko, nixos-facter-modules, ... }:
-  {
-    nixosConfigurations.generic = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      modules = [
-        disko.nixosModules.disko
-        ./configuration.nix
-        ./hardware-configuration.nix
-        ./disk-config.nix
-      ];
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-25.05";
+
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    agenix = {
+      url = "github:ryantm/agenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    nixos-hardware.url = "github:NixOS/nixos-hardware";
   };
+
+  outputs = { self, nixpkgs, home-manager, agenix, disko, nixos-hardware, ... } @ inputs:
+    let
+      system = "x86_64-linux";
+      pkgs = nixpkgs.legacyPackages.${system};
+      customPkgs = import ./pkgs { inherit pkgs; lib = nixpkgs.lib; };
+    in
+    {
+      nixosConfigurations = {
+        workstation = nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = { inherit inputs customPkgs; };
+          modules = [
+            ./hosts/workstation/default.nix
+            home-manager.nixosModules.home-manager
+            agenix.nixosModules.default
+            disko.nixosModules.disko
+          ];
+        };
+
+        samsung-expert = nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = { inherit inputs customPkgs; };
+          modules = [
+            ./hosts/samsung-expert/default.nix
+            # nixos-hardware.nixosModules.samsung-galaxy-book  # uncomment closest match
+            home-manager.nixosModules.home-manager
+            agenix.nixosModules.default
+            disko.nixosModules.disko
+          ];
+        };
+      };
+
+      packages.${system} = customPkgs;
+    };
 }
