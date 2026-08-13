@@ -6,6 +6,12 @@
     ../../modules/nixos/desktop
     ../../modules/nixos/hardware/btrfs.nix
     # ../../modules/nixos/hardware/nvidia.nix   # uncomment if applicable
+    # TLP: shared settings + amd-pstate + ThinkPad EC knobs (charge
+    # thresholds, platform profile). Previously this host imported no power
+    # module at all, so it got none of the Ansible role's TLP tuning.
+    ../../modules/nixos/hardware/power.nix
+    ../../modules/nixos/hardware/power-amd.nix
+    ../../modules/nixos/hardware/power-thinkpad.nix
     ../../modules/nixos/services/tailscale.nix
     ../../modules/nixos/services/docker.nix
     ../../modules/nixos/services/snapper.nix

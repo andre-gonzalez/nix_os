@@ -7,11 +7,27 @@
     ../../modules/nixos/hardware/btrfs.nix
     ../../modules/nixos/hardware/disko-btrfs.nix
     ../../modules/nixos/hardware/intel.nix
+    # TLP: shared settings + intel_pstate specifics. No ThinkPad module here —
+    # this machine has no EC charge thresholds or ACPI platform profile.
     ../../modules/nixos/hardware/power.nix
+    ../../modules/nixos/hardware/power-intel.nix
     ../../modules/nixos/services/tailscale.nix
   ];
 
   networking.hostName = "samsung-expert";
+
+  # The only host with a second, spinning SATA disk. This serial used to be
+  # written to /etc/tlp.conf on *every* notebook by the Ansible role, including
+  # machines that have no SATA controller at all.
+  services.tlp.settings = {
+    DISK_DEVICES = "ata-WDC_WDS240G2G0B-00EPW0_193994801333";
+    DISK_SPINDOWN_TIMEOUT_ON_AC = "0 0";
+    DISK_SPINDOWN_TIMEOUT_ON_BAT = "0 12";
+    DISK_APM_LEVEL_ON_AC = "254 254";
+    DISK_APM_LEVEL_ON_BAT = "128 128";
+    SATA_LINKPWR_ON_AC = "med_power_with_dipm";
+    SATA_LINKPWR_ON_BAT = "min_power";
+  };
 
   # WiFi: Qualcomm Atheros QCA9377 [168c:0042] — free, in-kernel ath10k_pci
   # driver (auto-loads via PCI, no boot.kernelModules pin needed). It only
