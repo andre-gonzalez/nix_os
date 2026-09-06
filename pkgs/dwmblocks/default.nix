@@ -11,7 +11,7 @@
 # The helpers are wrapped rather than merely copied because a status block is
 # spawned by dwmblocks with whatever PATH the X session happened to inherit —
 # on a graphical login, close to nothing. Wrapping pins the tools each needs.
-{ stdenv, lib, makeWrapper, xorg
+{ stdenv, lib, makeWrapper, libx11
 , coreutils, gnugrep, gnused, gawk, findutils, procps
 , iproute2, iw, iwd, bluez, playerctl, pamixer, brightnessctl, dunst
 , libnotify, btrfs-progs
@@ -38,7 +38,7 @@ stdenv.mkDerivation {
   };
 
   nativeBuildInputs = [ makeWrapper ];
-  buildInputs = [ xorg.libX11 ];
+  buildInputs = [ libx11 ];
 
   makeFlags = [ "PREFIX=$(out)" ];
   preBuild = "make clean"; # upstream commits a prebuilt generic-Linux binary; force a real recompile

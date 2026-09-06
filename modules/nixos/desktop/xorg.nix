@@ -33,11 +33,11 @@
   # Polkit agent for GUI privilege elevation
   environment.systemPackages = with pkgs; [
     lxsession
-    xorg.xsetroot
-    xorg.xrandr
-    xorg.xinput
-    xorg.xwininfo
-    xorg.xdpyinfo
+    xsetroot
+    xrandr
+    xinput
+    xwininfo
+    xdpyinfo
     arandr
     numlockx
     unclutter

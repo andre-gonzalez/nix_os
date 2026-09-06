@@ -1,5 +1,5 @@
 # dwmstatus — status string generator (alternative to dwmblocks)
-{ stdenv, lib, xorg }:
+{ stdenv, lib, libx11 }:
 stdenv.mkDerivation {
   pname = "dwmstatus";
   version = "unstable";
@@ -10,7 +10,7 @@ stdenv.mkDerivation {
     # rev = "abc123...";
   };
 
-  buildInputs = [ xorg.libX11 ];
+  buildInputs = [ libx11 ];
 
   makeFlags = [ "PREFIX=$(out)" ];
 
