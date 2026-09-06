@@ -3,7 +3,7 @@
 # off the monitor width (see patch/ultrawide.c upstream), so there are no longer
 # per-machine branches or binaries. config.h patches live in the git branch; no
 # patching needed here.
-{ stdenv, lib, xorg, fontconfig }:
+{ stdenv, lib, libx11, libxft, libxinerama, libxrender, fontconfig }:
 stdenv.mkDerivation {
   pname = "dwm";
   version = "6.8";
@@ -17,8 +17,8 @@ stdenv.mkDerivation {
 
   # libXrender and fontconfig are pulled in by config.mk's LDFLAGS (XRENDER is
   # uncommented upstream for the alpha/winicon patches).
-  buildInputs = with xorg; [
-    libX11 libXft libXinerama libXrender
+  buildInputs = [
+    libx11 libxft libxinerama libxrender
     fontconfig
   ];
 

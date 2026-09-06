@@ -1,5 +1,5 @@
 # dmenu — dynamic menu from andre-gonzalez's private repo
-{ stdenv, lib, xorg }:
+{ stdenv, lib, libx11, libxft, libxinerama }:
 stdenv.mkDerivation {
   pname = "dmenu";
   version = "unstable";
@@ -10,7 +10,7 @@ stdenv.mkDerivation {
     rev = "658e69fc7a5f4b8163afa7b056895963e2e6d380";
   };
 
-  buildInputs = with xorg; [ libX11 libXft libXinerama ];
+  buildInputs = [ libx11 libxft libxinerama ];
 
   makeFlags = [ "PREFIX=$(out)" ];
   preBuild = "make clean"; # upstream commits a prebuilt generic-Linux binary; force a real recompile

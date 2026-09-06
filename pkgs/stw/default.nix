@@ -1,5 +1,5 @@
 # stw — suckless text in window (on-screen display)
-{ stdenv, lib, xorg }:
+{ stdenv, lib, libx11, libxft }:
 stdenv.mkDerivation {
   pname = "stw";
   version = "unstable";
@@ -10,7 +10,7 @@ stdenv.mkDerivation {
     # rev = "abc123...";
   };
 
-  buildInputs = with xorg; [ libX11 libXft ];
+  buildInputs = [ libx11 libxft ];
 
   makeFlags = [ "PREFIX=$(out)" ];
 

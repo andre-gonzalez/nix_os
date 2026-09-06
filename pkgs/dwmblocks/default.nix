@@ -1,5 +1,5 @@
 # dwmblocks — modular status bar for dwm
-{ stdenv, lib, xorg }:
+{ stdenv, lib, libx11 }:
 stdenv.mkDerivation {
   pname = "dwmblocks";
   version = "unstable";
@@ -10,7 +10,7 @@ stdenv.mkDerivation {
     rev = "14e1110b408fc97c1fb32c2f84515eeb8eca377f";
   };
 
-  buildInputs = [ xorg.libX11 ];
+  buildInputs = [ libx11 ];
 
   makeFlags = [ "PREFIX=$(out)" ];
   preBuild = "make clean"; # upstream commits a prebuilt generic-Linux binary; force a real recompile
