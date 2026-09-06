@@ -121,7 +121,9 @@ derivation's `postPatch` (distro-specific, so it stays out of the fork).
 
 1. Restore `/var/lib/iwd` from the backup (`0700 root:root`, `.psk` files `0600`).
 2. Restore `~/.config/autorandr` (profiles `docked` + `laptop` + the `postswitch`
-   hook) and re-clone the dotfiles bare repo.
+   hook) and re-clone the dotfiles bare repo. `~/.scripts` is **not** manual —
+   `modules/home/scripts.nix` clones `andre-gonzalez/linux-scripts` into it on
+   activation (over HTTPS, so it needs no key; the push URL is set to ssh).
 3. `fprintd-enroll` as frank (~30 s). `/var/lib/fprint` was **not** backed up —
    re-enrolling is faster than restoring it.
 
@@ -253,6 +255,9 @@ ls /sys/firmware/efi >/dev/null 2>&1 && echo "UEFI ✅" || echo "LEGACY ❌"
   single-prompt keyfile is only used by the local install of the real T14.
 - No WiFi profile is seeded (no agenix). Log in as `frank` and use
   `iwctl station wlan0 connect <ssid>`.
+- `~/.scripts` clones itself on activation, but activation runs at boot, when
+  the network may not be up. If it is missing, the next `nixos-rebuild switch`
+  retries it — the failure is logged as a warning and never breaks activation.
 - Commit the generated `hosts/t14/hardware-configuration.remote.nix` if the
   target is going to stick around and rebuild itself from this repo — reverting
   it to the placeholder costs that machine its real scan (`kvm-intel`, its

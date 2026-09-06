@@ -1,6 +1,8 @@
 { inputs, customPkgs, pkgs, ... }:
 {
   imports = [
+    ./scripts.nix
+
     ./shell/fish.nix
     ./shell/tmux.nix
 
