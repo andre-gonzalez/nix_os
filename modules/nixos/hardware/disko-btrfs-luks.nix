@@ -22,80 +22,120 @@
 #   * /boot lives inside LUKS (on the @ subvolume), so kernels and initrds are
 #     encrypted too. That requires GRUB to open the container itself — see
 #     enableCryptodisk in the host file and the pbkdf2 note below.
-{ lib, ... }:
+{ config, lib, ... }:
+let
+  cfg = config.local.diskoLuks;
+in
 {
-  disko.devices = {
-    disk = {
-      main = {
-        type = "disk";
-        device = lib.mkDefault "/dev/sda";
-        content = {
-          type = "gpt";
-          partitions = {
-            ESP = {
-              priority = 1;
-              name = "ESP";
-              size = "512M";
-              type = "EF00";
-              content = {
-                type = "filesystem";
-                format = "vfat";
-                # Mounted at /boot/efi, not /boot: /boot is on the encrypted
-                # btrfs so only the GRUB EFI binary sits in the clear.
-                mountpoint = "/boot/efi";
-                mountOptions = [ "umask=0077" ];
-              };
-            };
-            luks = {
-              priority = 2;
-              name = "luks";
-              size = "100%";
-              content = {
-                type = "luks";
-                name = "cryptroot";
-                # GRUB 2.12 in this nixpkgs pin carries no argon2 patch, so a
-                # default (argon2id) LUKS2 header is unreadable to it and the
-                # machine will not boot. Force the PBKDF back to pbkdf2.
-                extraFormatArgs = [ "--pbkdf" "pbkdf2" ];
+  options.local.diskoLuks = {
+    passwordFile = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      example = "/tmp/luks.key";
+      description = ''
+        Path *on the installer* to a file holding the LUKS passphrase, read by
+        disko at format time. Only ever consulted while formatting — it has no
+        effect on an installed system, and the file is never copied to the
+        target.
 
-                # Second key slot, so the initrd can unlock without a second
-                # passphrase prompt. Safe *only because* of this layout: the
-                # initrd holding the embedded key is itself on encrypted /boot.
-                # Requires the keyfile to exist BEFORE disko runs:
-                #   dd if=/dev/urandom of=/tmp/crypto_keyfile.bin bs=512 count=8
-                #   chmod 0600 /tmp/crypto_keyfile.bin
-                # and to be copied to /mnt/boot/crypto_keyfile.bin (0600) after
-                # mount, before nixos-install. See hosts/t14/INSTALL.md.
-                # Drop this line (and the matching boot.initrd bits in the host
-                # file) to accept two passphrase prompts instead — cosmetic only.
-                additionalKeyFiles = [ "/tmp/crypto_keyfile.bin" ];
+        null (the default) makes cryptsetup prompt interactively, which is what
+        you want for a local install from the ISO. A non-interactive install
+        (nixos-anywhere over ssh) has no tty for that prompt, so it must set
+        this and ship the file with `--disk-encryption-keys`.
+      '';
+    };
 
+    useInitrdKeyFile = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = ''
+        Add /tmp/crypto_keyfile.bin as a second LUKS key slot, so the initrd can
+        unlock without a second passphrase prompt (GRUB asks once and hands off).
+        Safe only because /boot — and therefore the initrd carrying the embedded
+        key — is itself inside the container.
+
+        Requires the keyfile to exist BEFORE disko runs:
+          dd if=/dev/urandom of=/tmp/crypto_keyfile.bin bs=512 count=8
+          chmod 0600 /tmp/crypto_keyfile.bin
+        and to be copied to /mnt/boot/crypto_keyfile.bin (0600) after mount,
+        before nixos-install. See hosts/t14/INSTALL.md.
+
+        Set false to accept two passphrase prompts instead (cosmetic only). The
+        host must gate its matching boot.initrd.secrets / boot.initrd.luks
+        keyFile lines on this same option.
+      '';
+    };
+  };
+
+  config = {
+    disko.devices = {
+      disk = {
+        main = {
+          type = "disk";
+          device = lib.mkDefault "/dev/sda";
+          content = {
+            type = "gpt";
+            partitions = {
+              ESP = {
+                priority = 1;
+                name = "ESP";
+                size = "512M";
+                type = "EF00";
                 content = {
-                  type = "btrfs";
-                  extraArgs = [ "-f" ]; # force overwrite any existing filesystem
-                  subvolumes = {
-                    # Snapshotted by snapper (config "root"). Carries /boot.
-                    "@" = {
-                      mountpoint = "/";
-                      mountOptions = [ "compress=zstd" "noatime" ];
-                    };
-                    # Snapshotted by snapper (config "home")
-                    "@home" = {
-                      mountpoint = "/home";
-                      mountOptions = [ "compress=zstd" "noatime" ];
-                    };
-                    # Nix store — compressed, no snapshots needed
-                    "@nix" = {
-                      mountpoint = "/nix";
-                      mountOptions = [ "compress=zstd" "noatime" ];
-                    };
-                    # Swapfile host. disko runs `btrfs filesystem mkswapfile`,
-                    # which sets NOCOW itself; the subvolume must not be
-                    # compressed or snapshotted.
-                    "@swap" = {
-                      mountpoint = "/swap";
-                      mountOptions = [ "noatime" ];
-                      swap.swapfile.size = "8G";
+                  type = "filesystem";
+                  format = "vfat";
+                  # Mounted at /boot/efi, not /boot: /boot is on the encrypted
+                  # btrfs so only the GRUB EFI binary sits in the clear.
+                  mountpoint = "/boot/efi";
+                  mountOptions = [ "umask=0077" ];
+                };
+              };
+              luks = {
+                priority = 2;
+                name = "luks";
+                size = "100%";
+                content = {
+                  type = "luks";
+                  name = "cryptroot";
+                  # GRUB 2.12 in this nixpkgs pin carries no argon2 patch, so a
+                  # default (argon2id) LUKS2 header is unreadable to it and the
+                  # machine will not boot. Force the PBKDF back to pbkdf2.
+                  extraFormatArgs = [ "--pbkdf" "pbkdf2" ];
+
+                  # null => interactive prompt (local ISO install).
+                  passwordFile = cfg.passwordFile;
+
+                  # Second key slot for the initrd; see the option description.
+                  additionalKeyFiles =
+                    lib.optionals cfg.useInitrdKeyFile [ "/tmp/crypto_keyfile.bin" ];
+
+                  content = {
+                    type = "btrfs";
+                    extraArgs = [ "-f" ]; # force overwrite any existing filesystem
+                    subvolumes = {
+                      # Snapshotted by snapper (config "root"). Carries /boot.
+                      "@" = {
+                        mountpoint = "/";
+                        mountOptions = [ "compress=zstd" "noatime" ];
+                      };
+                      # Snapshotted by snapper (config "home")
+                      "@home" = {
+                        mountpoint = "/home";
+                        mountOptions = [ "compress=zstd" "noatime" ];
+                      };
+                      # Nix store — compressed, no snapshots needed
+                      "@nix" = {
+                        mountpoint = "/nix";
+                        mountOptions = [ "compress=zstd" "noatime" ];
+                      };
+                      # Swapfile host. disko runs `btrfs filesystem mkswapfile`,
+                      # which sets NOCOW itself; the subvolume must not be
+                      # compressed or snapshotted.
+                      "@swap" = {
+                        mountpoint = "/swap";
+                        mountOptions = [ "noatime" ];
+                        swap.swapfile.size = "8G";
+                      };
                     };
                   };
                 };
@@ -105,14 +145,14 @@
         };
       };
     };
-  };
 
-  # zram is preferred over the disk swapfile (higher priority number wins).
-  # 25% of ~27 GiB ≈ 6.8 G compressed-in-RAM, scaled up from the 4 G used on
-  # Arch. The 8 G file below it is the overflow tier only.
-  zramSwap = {
-    enable = true;
-    memoryPercent = 25;
-    priority = 100;
+    # zram is preferred over the disk swapfile (higher priority number wins).
+    # 25% of ~27 GiB ≈ 6.8 G compressed-in-RAM, scaled up from the 4 G used on
+    # Arch. The 8 G file below it is the overflow tier only.
+    zramSwap = {
+      enable = true;
+      memoryPercent = 25;
+      priority = 100;
+    };
   };
 }

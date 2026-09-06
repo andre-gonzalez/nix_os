@@ -42,6 +42,8 @@
     numlockx
     unclutter
     xclip
+    xmodmap    # .xinitrc merges ~/.Xmodmap and /etc/X11/xinit/.Xmodmap
+    clipmenu   # clipmenud is started from .xinitrc; dmenu-based clipboard history
     xautolock
     flameshot
     brightnessctl

@@ -6,14 +6,16 @@
 # ultrawide when docked. s2idle only — this machine has no S3.
 #
 # This host replaces the old (never-installed) `workstation` host.
-{ config, pkgs, inputs, customPkgs, ... }:
+{ config, lib, pkgs, inputs, customPkgs, ... }:
 {
   imports = [
-    # Generated on install day with:
+    # Regenerated on install day and overwritten in place, either by
     #   nixos-generate-config --no-filesystems --root /mnt
-    # (--no-filesystems keeps disko in charge of mounts). Uncomment once the
-    # generated file is committed here — see hosts/t14/INSTALL.md step 3.
-    # ./hardware-configuration.nix
+    # locally, or by nixos-anywhere's --generate-hardware-config remotely.
+    # (--no-filesystems keeps disko in charge of mounts.) The file in the repo
+    # is a tracked generic placeholder so the flake evaluates *before* the real
+    # one exists — a flake cannot import a path that is missing or untracked.
+    ./hardware-configuration.nix
 
     ../../modules/nixos/base
     ../../modules/nixos/desktop
@@ -70,10 +72,19 @@
   # Single passphrase prompt: GRUB asks once, then hands off to an initrd that
   # carries a keyfile for the second LUKS key slot. This is only safe because
   # /boot is itself encrypted, so the embedded key never sits in the clear.
-  # See hosts/t14/INSTALL.md; drop these three lines plus additionalKeyFiles in
-  # disko-btrfs-luks.nix to fall back to two prompts (cosmetic difference only).
-  boot.initrd.secrets."/crypto_keyfile.bin" = "/boot/crypto_keyfile.bin";
-  boot.initrd.luks.devices.cryptroot.keyFile = "/crypto_keyfile.bin";
+  #
+  # Gated on local.diskoLuks.useInitrdKeyFile (default true) so that the two
+  # halves — the extra LUKS key slot in disko-btrfs-luks.nix and the initrd
+  # secret here — can never drift apart. hosts/t14/remote-install.nix turns it
+  # off: boot.initrd.secrets is resolved *during* nixos-install, before
+  # nixos-anywhere gets a chance to copy --extra-files into /mnt, so an
+  # unattended install cannot satisfy /boot/crypto_keyfile.bin and would abort
+  # at bootloader installation. Cost of turning it off is one extra passphrase
+  # prompt at boot.
+  boot.initrd.secrets."/crypto_keyfile.bin" =
+    lib.mkIf config.local.diskoLuks.useInitrdKeyFile "/boot/crypto_keyfile.bin";
+  boot.initrd.luks.devices.cryptroot.keyFile =
+    lib.mkIf config.local.diskoLuks.useInitrdKeyFile "/crypto_keyfile.bin";
 
   # No boot.resumeDevice / resume_offset: hibernation is deliberately not
   # configured (swap lives in a file inside LUKS, and this machine is s2idle-only).
