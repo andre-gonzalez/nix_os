@@ -7,7 +7,9 @@
       package = pkgs.qemu_kvm;
       runAsRoot = false;
       swtpm.enable = true;      # TPM emulation for Windows 11
-      ovmf.enable = true;       # UEFI firmware for VMs
+      # ovmf.enable was removed upstream: the `virtualisation.libvirtd.qemu.ovmf`
+      # submodule is gone, and all OVMF images distributed with QEMU are now
+      # available by default. Setting it is a hard assertion failure.
     };
   };
 
