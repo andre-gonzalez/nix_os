@@ -15,11 +15,19 @@ stdenv.mkDerivation {
   makeFlags = [ "PREFIX=$(out)" ];
   preBuild = "make clean"; # upstream commits a prebuilt generic-Linux binary; force a real recompile
 
-  # The Makefile's install target runs `chmod u+s`, which fails in the Nix
-  # sandbox. Strip it here — setuid is granted at runtime via
-  # security.wrappers.slock (see modules/nixos/desktop/xorg.nix).
+  # Two distro-specific fixups. These live here rather than in the fork because
+  # the fork is shared with Arch.
+  #
+  #  1. The Makefile's install target runs `chmod u+s`, which fails in the Nix
+  #     sandbox. Strip it — setuid is granted at runtime via
+  #     security.wrappers.slock (see modules/nixos/desktop/xorg.nix).
+  #  2. The committed config.h has `group = "nobody"` (its comment says "use
+  #     nobody for arch"). NixOS ships **nogroup**, not nobody, so getgrnam()
+  #     fails and slock dies at startup. Only the *group* line is rewritten —
+  #     `user = "nobody"` is correct on NixOS and must stay.
   postPatch = ''
     substituteInPlace Makefile --replace-quiet "chmod u+s" "true"
+    substituteInPlace config.h --replace-fail 'group = "nobody"' 'group = "nogroup"'
   '';
 
   meta = {
