@@ -31,11 +31,22 @@
     in
     {
       nixosConfigurations = {
-        workstation = nixpkgs.lib.nixosSystem {
+        # ThinkPad T14 Gen 6 (AMD). Replaces the old `workstation` host.
+        #
+        # Deliberately NOT nixos-hardware.nixosModules.lenovo-thinkpad-t14-amd-gen5:
+        # there is no gen6 module upstream, and gen5 hardcodes acpi.ec_no_wakeup=1
+        # for a Gen 5 EC bug. Once imported, a single kernel param cannot be
+        # removed without mkForce-ing the whole list. Compose the common modules
+        # instead.
+        t14 = nixpkgs.lib.nixosSystem {
           inherit system;
           specialArgs = { inherit inputs customPkgs; };
           modules = [
-            ./hosts/workstation/default.nix
+            ./hosts/t14/default.nix
+            nixos-hardware.nixosModules.lenovo-thinkpad       # trackpoint + emulateWheel; pulls common/pc/laptop
+            nixos-hardware.nixosModules.common-cpu-amd-pstate # amd_pstate=active
+            nixos-hardware.nixosModules.common-gpu-amd        # modesetting, graphics.enable32Bit, amdgpu.initrd
+            nixos-hardware.nixosModules.common-pc-ssd         # fstrim
             home-manager.nixosModules.home-manager
             agenix.nixosModules.default
             disko.nixosModules.disko
