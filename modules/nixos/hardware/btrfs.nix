@@ -88,7 +88,12 @@ in
     wantedBy = [ "multi-user.target" ];
     after = [ "local-fs.target" ];
     before = [ "snapper-cleanup.service" ];
-    path = [ pkgs.btrfs-progs ];
+    # gawk as well as btrfs-progs: systemd's default unit PATH carries
+    # coreutils/findutils/gnugrep/gnused but NOT awk, and the probe below calls
+    # it. Without this the probe dies with 127, `if !` reads that as "qgroup
+    # absent", and the service then tries to create a qgroup that already
+    # exists — failing every boot, with the space limits never enforced.
+    path = [ pkgs.btrfs-progs pkgs.gawk ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
