@@ -21,6 +21,9 @@
   # Dvorak keyboard layout in virtual console (mirrors /etc/vconsole.conf)
   console = {
     keyMap = "dvorak";
+    # Load the keymap in the initrd too, so the LUKS passphrase prompt there
+    # is Dvorak — what the Arch keymap/mkinitcpio hook did.
+    earlySetup = true;
   };
 
   # Dvorak in X11 is handled in modules/nixos/desktop/xorg.nix

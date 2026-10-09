@@ -54,8 +54,8 @@
         };
 
         # Same host, reshaped for an unattended nixos-anywhere install onto a
-        # test machine: LUKS passphrase from a file, no initrd keyfile, no
-        # agenix, its own hardware scan. See hosts/t14/remote-install.nix.
+        # test machine: LUKS passphrase from a file, no agenix, its own
+        # hardware scan. See hosts/t14/remote-install.nix.
         t14-remote = nixpkgs.lib.nixosSystem {
           inherit system;
           specialArgs = { inherit inputs customPkgs; };

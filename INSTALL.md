@@ -7,11 +7,10 @@ has no way to rejoin the network), so the remote install stalls right after
 kexec. Instead we install **locally** from a NixOS USB, where WiFi is brought
 up once with `nmtui` and stays up for the whole install.
 
-The disk is **fully encrypted** (LUKS2 + btrfs, `/boot` inside the container —
-`modules/nixos/hardware/disko-btrfs-luks.nix`, same layout as t14). GRUB asks
-for the passphrase once; the initrd then unlocks with a keyfile from a second
-key slot, so there is a single prompt per boot. Note that GRUB's prompt uses
-the **US keyboard layout**, not dvorak.
+The disk is **encrypted** (LUKS2 + btrfs, swapfile inside —
+`modules/nixos/hardware/disko-btrfs-luks.nix`, same layout as t14). `/boot` is
+the unencrypted ESP, as on Arch, and the initrd asks for the passphrase once,
+with the **Dvorak** keymap.
 
 ⚠️ Re-installing erases the whole disk. Back up `/home/frank` (and, if you want
 the WiFi networks added with `iwctl`, `/var/lib/iwd`) before you start.
@@ -21,7 +20,7 @@ stored as `agenix` secrets (`secrets/iwd-*.age`) that are decrypted at
 boot using the host SSH key. That host key is pre-generated and kept in
 `.extra-files/samsung-expert/etc/ssh/` (gitignored — it is the private key the
 secret is encrypted to; keep it safe and never commit it). We copy it into
-place manually during the install (step 7 below).
+place manually during the install (step 5 below).
 
 ---
 
@@ -96,36 +95,29 @@ cp /mnt/src/nixos-install-bundle.tar.gz /root/
 umount /mnt/src
 cd /root && tar xzf nixos-install-bundle.tar.gz && cd nix_os
 
-# 2. Create the initrd keyfile BEFORE disko runs. disko adds it as the second
-#    LUKS key slot (local.diskoLuks.useInitrdKeyFile, default true).
-dd if=/dev/urandom of=/tmp/crypto_keyfile.bin bs=512 count=8
-chmod 0600 /tmp/crypto_keyfile.bin
-
-# 3. Partition + encrypt + format + mount /dev/sda  (⚠️ ERASES the entire 894G disk)
-#    cryptsetup asks for the new LUKS passphrase here. Type it with the US
-#    layout in mind: GRUB will read it with US keys at every boot.
+# 2. Partition + encrypt + format + mount /dev/sda  (⚠️ ERASES the entire 894G disk)
+#    cryptsetup asks for the new LUKS passphrase here. Switch the installer
+#    keyboard to Dvorak FIRST (graphical ISO: Settings → Keyboard; a text
+#    console: `loadkeys dvorak`), so you set the passphrase with the same
+#    layout the initrd prompt will use at every boot.
 #    If this errors on an older disko CLI, use: --mode disko
 nix run github:nix-community/disko/latest -- \
   --mode destroy,format,mount \
   --flake .#samsung-expert
 
-# 4. Put the keyfile where boot.initrd.secrets expects it (inside LUKS, so
-#    it is never stored in the clear). nixos-install aborts without it.
-install -D -m 0600 /tmp/crypto_keyfile.bin /mnt/boot/crypto_keyfile.bin
-
-# 5. Generate hardware modules for THIS machine (keeps disko in charge of mounts)
+# 3. Generate hardware modules for THIS machine (keeps disko in charge of mounts)
 nixos-generate-config --no-filesystems --root /mnt
 cp /mnt/etc/nixos/hardware-configuration.nix hosts/samsung-expert/hardware-configuration.nix
 
-# 6. Install the system (root stays locked; the frank password is baked in)
+# 4. Install the system (root stays locked; the frank password is baked in)
 nixos-install --flake .#samsung-expert --no-root-passwd
 
-# 7. Inject the agenix host key BEFORE reboot, so the secrets decrypt on first boot
+# 5. Inject the agenix host key BEFORE reboot, so the secrets decrypt on first boot
 install -d -m700 /mnt/etc/ssh
 install -m600 .extra-files/samsung-expert/etc/ssh/ssh_host_ed25519_key     /mnt/etc/ssh/ssh_host_ed25519_key
 install -m644 .extra-files/samsung-expert/etc/ssh/ssh_host_ed25519_key.pub /mnt/etc/ssh/ssh_host_ed25519_key.pub
 
-# 8. Reboot, then pull out both USB sticks so it boots from /dev/sda
+# 6. Reboot, then pull out both USB sticks so it boots from /dev/sda
 reboot
 ```
 
@@ -133,8 +125,8 @@ reboot
 
 ## 4. After reboot
 
-GRUB asks for the LUKS passphrase (US layout), then the machine boots straight
-into the desktop (tty1 autologin). `ath10k_pci` brings up the QCA9377, `agenix`
+The initrd asks for the LUKS passphrase (Dvorak), then the machine boots
+straight into the desktop (tty1 autologin). `ath10k_pci` brings up the QCA9377, `agenix`
 decrypts the PSKs into `/var/lib/iwd`, and `iwd` joins a known network
 automatically. Log in at the console as
 `frank`, or SSH from your workstation once it is online:

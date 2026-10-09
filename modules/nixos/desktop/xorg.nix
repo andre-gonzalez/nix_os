@@ -13,11 +13,14 @@
   services.xserver = {
     enable = true;
 
-    # Dvorak keyboard layout in X11 (mirrors setxkbmap in .xinitrc)
+    # Mirrors roles/light_workstation/files/00-keyboard.conf, which is also
+    # what .xinitrc's setxkbmap applies: Dvorak with dead keys for accents,
+    # Caps Lock and Escape swapped, Ctrl+Alt+Backspace kills X.
     xkb = {
       layout = "us";
-      variant = "dvorak";
-      options = "caps:escape"; # caps lock → escape (common for vim users)
+      model = "pc105";
+      variant = "dvorak-intl";
+      options = "caps:swapescape,terminate:ctrl_alt_bksp";
     };
 
     # No display manager — frank runs startx from tty1

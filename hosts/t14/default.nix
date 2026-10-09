@@ -51,11 +51,10 @@
 
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
-  # GRUB, with /boot (and therefore every kernel and initrd) inside the LUKS
-  # container. enableCryptodisk exports GRUB_ENABLE_CRYPTODISK=y so GRUB itself
-  # can open the container. Lenovo firmware handles NVRAM boot entries fine, so
-  # unlike the Samsung host this uses canTouchEfiVariables rather than
-  # efiInstallAsRemovable.
+  # GRUB on the unencrypted ESP mounted at /boot; the initrd unlocks LUKS with
+  # a Dvorak prompt (see disko-btrfs-luks.nix). Lenovo firmware handles NVRAM
+  # boot entries fine, so unlike the Samsung host this uses
+  # canTouchEfiVariables rather than efiInstallAsRemovable.
   boot.loader.grub = {
     enable = true;
     device = "nodev";
@@ -66,10 +65,7 @@
   };
   boot.loader.timeout = 1;
   boot.loader.efi.canTouchEfiVariables = true;
-  boot.loader.efi.efiSysMountPoint = "/boot/efi"; # matches disko-btrfs-luks.nix ESP mount
-
-  # GRUB cryptodisk and the single-prompt initrd keyfile come from
-  # disko-btrfs-luks.nix (local.diskoLuks.useInitrdKeyFile).
+  boot.loader.efi.efiSysMountPoint = "/boot"; # matches disko-btrfs-luks.nix ESP mount
 
   # No boot.resumeDevice / resume_offset: hibernation is deliberately not
   # configured (swap lives in a file inside LUKS, and this machine is s2idle-only).
