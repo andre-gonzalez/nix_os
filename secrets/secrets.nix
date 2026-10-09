@@ -48,6 +48,7 @@ in
   "scripts-env-ipinfo.age".publicKeys                     = allHosts;
   "scripts-env-people.age".publicKeys                     = allHosts;
   "scripts-env-mac-address-proxmox-server.age".publicKeys = allHosts;
+  "gpg-secret-keys.age".publicKeys      = allHosts; # secrets/export-gpg-keys.sh
 
   # Work (home/work/*.nix), imported from the live Arch files — the vaulted
   # Ansible copies are older (AWS keys before SSO, a past employer's Databricks).

@@ -13,5 +13,6 @@
     ./keyring.nix
     ./onepassword.nix
     ./uberall-vpn.nix
+    ./gnupg.nix
   ];
 }

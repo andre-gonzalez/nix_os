@@ -3,6 +3,7 @@
   imports = [
     ./scripts.nix
     ./repos.nix
+    ./gpg.nix
 
     ./shell/fish.nix
     ./shell/tmux.nix
