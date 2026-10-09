@@ -184,10 +184,11 @@ Keep the Debian VM (powered off, `onboot 0`) for a few weeks before deleting it.
 
 ## Operating it
 
-- **NixOS changes**: until the nix_os CI deploys it, from the laptop:
-  `nixos-rebuild switch --flake .#servarr --target-host frank@servarr --sudo --ask-sudo-password`
-  (TOTP, then frank's sudo password). Docker runs with live-restore, so a
-  switch that restarts dockerd leaves the containers up.
+- **NixOS changes**: merge to `main`; CI deploys them (next section). By hand,
+  with CI off or to repair: `nixos-rebuild switch --flake .#servarr
+  --target-host frank@servarr --sudo --ask-sudo-password` (TOTP, then frank's
+  sudo password). Docker runs with live-restore, so a switch that restarts
+  dockerd leaves the containers up.
 - **New `${VAR}` in a servarr compose file**: add it to `secrets/servarr-env.age`
   (in `secrets/`: `nix run github:ryantm/agenix -- -e servarr-env.age -i ~/.ssh/personal_id_ed25519_2023-11`),
   deploy this host, and only then merge
@@ -197,3 +198,72 @@ Keep the Debian VM (powered off, `onboot 0`) for a few weeks before deleting it.
 - **NAS down at boot**: docker requires `/mnt/media` (`storage.nix`), so no
   container starts — Pi-hole included — until the mount works:
   `sudo systemctl restart mnt-media.mount docker.service`.
+
+## CI deploys of this repo
+
+`.github/workflows/build.yaml` deploys every push to `main` to servarr, the
+same way the servarr repo deploys its stacks: CI can only name a commit.
+
+```
+push to main ──▶ eval + build-servarr ──▶ deploy-servarr (tag:ci on the tailnet)
+                                            │ ssh nixdeploy@servarr "deploy <sha>"
+                                            ▼
+              servarr-nixos-deploy (root via one sudo rule, hosts/servarr/nixos-deploy.sh)
+                <sha> on main? → nix build it here → unchanged: done
+                → arm a 5 min revert timer → switch-to-configuration test
+                → sshd, tailscaled, docker active? (no: switch back now)
+                                            │ exit 4
+                                            ▼
+                         ssh nixdeploy@servarr "confirm <sha>"   (a NEW connection)
+                → disarm the timer, make it the boot default
+```
+
+If the new config breaks SSH, the firewall or Tailscale, the confirm never
+arrives and the timer switches back. Laptop-only changes build to the same
+servarr closure, so they are a no-op there.
+
+### One-time setup
+
+Run from the nix_os checkout on the laptop.
+
+1. **Key** for GitHub only:
+   ```bash
+   ssh-keygen -t ed25519 -N '' -C github-actions-nixos-deploy -f ./nixos_deploy_key
+   cp nixos_deploy_key.pub hosts/servarr/nixos-deploy-ci.pub
+   git add hosts/servarr/nixos-deploy-ci.pub && git commit -m "servarr: CI deploy key"
+   ```
+   It only takes effect once servarr runs a config that contains it: merge
+   it before the install, or deploy once by hand (`nixos-rebuild … --target-host`).
+2. **Tailscale**, admin console → Settings → Trust credentials → OpenID Connect:
+   issuer GitHub, subject `repo:andre-gonzalez/nix_os:ref:refs/heads/main`,
+   scope Auth Keys → Write, tag `tag:ci`. The ACL from the servarr repo's
+   docs/deploy.md §3 already lets `tag:ci` reach servarr's sshd and nothing else.
+3. **GitHub secrets** (repository secrets, used by the deploy job only):
+   ```bash
+   R=andre-gonzalez/nix_os
+   gh secret set -R $R TS_OAUTH_CLIENT_ID          # client ID from step 2
+   gh secret set -R $R TS_AUDIENCE                 # audience from step 2
+   gh secret set -R $R DEPLOY_HOST                 # servarr's 100.x.y.z
+   gh secret set -R $R DEPLOY_PORT                 # <ssh-port>
+   gh secret set -R $R DEPLOY_SSH_KEY < nixos_deploy_key
+   ssh-keyscan -p <ssh-port> -t ed25519 <100.x.y.z> | gh secret set -R $R DEPLOY_KNOWN_HOSTS
+   rm nixos_deploy_key nixos_deploy_key.pub
+   gh variable set -R $R DEPLOY_MODE --body dry-run
+   ```
+4. **Rollout**: merge something harmless and read the deploy job summary
+   (dry-run builds on the server and reports, activates nothing). Then
+   `gh variable set -R andre-gonzalez/nix_os DEPLOY_MODE --body live`.
+
+Kill switch: `gh variable set -R andre-gonzalez/nix_os DEPLOY_MODE --body off`.
+
+### When a deploy goes wrong
+
+| Job summary | Meaning | Do |
+|-------------|---------|----|
+| ✅ | deployed, or the commit does not change servarr | — |
+| ⛔ refused | not on main, a deploy is still waiting for confirm, or the build failed. Nothing changed | build failure: `sudo less /var/lib/nixos-deploy/build.log` on servarr |
+| ↩️ switched back | activation failed or a health unit stayed down | fix forward with another PR |
+| ⏳ / 🔌 | CI could not confirm | nothing: the server switches back within 5 min. `sudo servarr-nixos-deploy status` |
+| 🚨 needs a human | the switch back did not come up clean either | Proxmox console: `sudo nixos-rebuild switch --rollback` (the boot default is still the last confirmed generation, so a reboot also gets you there) |
+
+Every deploy's output is in `/var/lib/nixos-deploy/deploy.log` on servarr.

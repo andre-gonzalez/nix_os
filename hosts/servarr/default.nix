@@ -28,6 +28,7 @@
     ./storage.nix
     ./dns.nix
     ./radicale-push.nix
+    ./nixos-deploy.nix
   ];
 
   networking.hostName = "servarr";
