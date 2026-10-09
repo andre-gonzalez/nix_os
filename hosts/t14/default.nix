@@ -70,9 +70,9 @@
   # No boot.resumeDevice / resume_offset: hibernation is deliberately not
   # configured (swap lives in a file inside LUKS, and this machine is s2idle-only).
 
-  # No lsm= / audit= kernel params here: base/security.nix sets security.lsm
-  # (nixpkgs turns it into the one lsm= param; a second one here would win
-  # and drop modules) and security.audit.enable already adds audit=1.
+  # No lsm= kernel param here: base/security.nix sets security.lsm, which
+  # nixpkgs turns into the one lsm= param; a second one here would win and
+  # drop modules.
 
   ##############################################################################
   # WiFi — MediaTek MT7925 (mt7925e), firmware from linux-firmware above.

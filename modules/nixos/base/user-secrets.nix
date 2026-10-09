@@ -36,7 +36,7 @@ in
     value = {
       file = file name;
       owner = "frank";
-      group = "users";
+      group = "frank";
       mode = "0400";
     };
   }) (lib.filter has names));
