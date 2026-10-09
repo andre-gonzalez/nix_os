@@ -118,7 +118,7 @@ reboot
 `frank`, or SSH from your workstation once it is online:
 
 ```bash
-ssh -i ~/.ssh/personal_id_ed25519_2023-11 frank@<ip>    # default port 22
+ssh -i ~/.ssh/personal_id_ed25519_2023-11 -p <ssh_port> frank@<ip>    # port from secrets/ssh-port.age (22 if absent)
 ```
 
 Find `<ip>` from your router, or run `ip a` on the target console.

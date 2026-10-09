@@ -30,7 +30,9 @@
       sshd = {
         settings = {
           enabled = true;
-          port = "ssh";
+          # "ssh" would mean 22; the real port is a boot-time secret (ssh.nix),
+          # so ban the offender on every port instead.
+          port = "0:65535";
           filter = "sshd";
           maxretry = 3;
           bantime = "24h";
