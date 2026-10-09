@@ -90,10 +90,9 @@
   boot.loader.efi.canTouchEfiVariables = false;
   boot.loader.efi.efiSysMountPoint = "/boot"; # matches disko-btrfs-luks.nix ESP mount
 
-  boot.kernelParams = [
-    "lsm=landlock,lockdown,yama,integrity,apparmor,bpf"
-    "audit=1"
-  ];
+  # No lsm= / audit= kernel params here: base/security.nix sets security.lsm
+  # (nixpkgs turns it into the one lsm= param; a second one here would win
+  # and drop modules) and security.audit.enable already adds audit=1.
 
   home-manager = {
     useGlobalPkgs = true;

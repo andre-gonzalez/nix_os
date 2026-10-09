@@ -161,7 +161,7 @@ boot.loader.efi.canTouchEfiVariables = true;   # Lenovo firmware is fine with NV
 boot.loader.efi.efiSysMountPoint = "/boot/efi"; # unlike the Samsung (efiInstallAsRemovable)
 boot.kernelPackages = pkgs.linuxPackages_latest;
 hardware.enableRedistributableFirmware = true;
-boot.kernelParams = [ "lsm=landlock,lockdown,yama,integrity,apparmor,bpf" "audit=1" ];
+boot.kernelParams = [ "lsm=landlock,lockdown,yama,integrity,bpf" "audit=1" ];
 ```
 
 ### Open sub-decision: one passphrase prompt or two

@@ -7,7 +7,7 @@
 | `flake.nix` | Root: inputs (nixpkgs-unstable, home-manager, agenix, disko, nixos-hardware), both host configs, custom package exports |
 | `hosts/t14/` | ThinkPad T14 Gen 6 (AMD) — imports base + desktop + btrfs + amd + power(+amd,+thinkpad) + disko-btrfs-luks + docker + tailscale + libvirt + home-manager. Adds LUKS/GRUB, iwd, fprintd, lock-on-suspend, fwupd. Replaces the old `workstation` host. See `hosts/t14/INSTALL.md`. |
 | `hosts/samsung-expert/` | Laptop host — imports base + desktop + btrfs + intel + power(+intel) + disko-btrfs-luks + tailscale + docker + libvirt; QCA9377 WiFi (iwd), nouveau disabled, GRUB to the removable EFI path; the only host with a SATA disk. Local USB install, see `INSTALL.md`. |
-| `modules/nixos/base/` | users, locale (Dvorak/São Paulo), packages, ssh hardening, AppArmor/fail2ban/auditd, nftables firewall, network/resolved, fish, SSD-gated fstrim |
+| `modules/nixos/base/` | users, locale (Dvorak/São Paulo), packages, ssh hardening, fail2ban/auditd, nftables firewall, network/resolved, fish, SSD-gated fstrim |
 | `modules/nixos/desktop/` | xorg (startx/autologin), pipewire, bluetooth, fonts (Noto/Nerd/JoyPixels), autorandr |
 | `modules/nixos/hardware/` | intel VA-API, amd VA-API, nvidia-open, btrfs+snapper; TLP power split into `power.nix` (vendor-neutral) + `power-amd.nix` / `power-intel.nix` (pick one) + `power-thinkpad.nix` (charge thresholds, platform profile); disko btrfs (plain + LUKS) |
 | `modules/nixos/services/` | tailscale, docker, snapper, preload |

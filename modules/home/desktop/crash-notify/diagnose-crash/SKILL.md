@@ -35,9 +35,6 @@ different than a single failure does.
 Check resource exhaustion before blaming the program: `free -h`, and the journal
 for OOM kills. A process killed by the OOM killer is not a bug in that process.
 
-AppArmor is enforced here. Check `journalctl -b -k --grep 'apparmor="DENIED"'`
-around the crash time: a denial the program did not handle can end in an abort.
-
 ## Correlate against the timeline
 
 The crash timestamp is the most underused piece of evidence. Compare it against:
@@ -106,7 +103,7 @@ above, which is a copy of the crashed process's memory.
 
 This session starts in the NixOS flake repo that manages this machine. When the
 fix is in something it manages — a package choice, a config file, a systemd
-unit, an AppArmor profile — describe the change you would make there, and make
+unit — describe the change you would make there, and make
 it only once the user says yes. Never run `nixos-rebuild`, restart services, or
 change files outside the repo without being asked.
 

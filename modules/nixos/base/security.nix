@@ -1,11 +1,12 @@
 # Mirrors roles/base/tasks/security.yml
 { pkgs, ... }:
 {
-  # AppArmor
-  security.apparmor = {
-    enable = true;
-    killUnconfinedConfinables = false;
-  };
+  # Linux security modules, as on Arch minus AppArmor (disabled there too).
+  # nixpkgs already lists landlock and yama, and appends bpf last; it turns the
+  # list into the single lsm= kernel parameter. Never pass lsm= through
+  # boot.kernelParams as well: the kernel only honours the last one, which
+  # silently dropped lockdown and integrity.
+  security.lsm = [ "lockdown" "integrity" ];
 
   # Auditd
   security.auditd.enable = true;
