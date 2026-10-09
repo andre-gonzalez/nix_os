@@ -1,23 +1,17 @@
-# AWS CLI v2 + credentials from agenix
-{ pkgs, ... }:
+# AWS CLI v2 — mirrors roles/work/tasks/aws.yml.
+#
+# Access is AWS SSO now: on Arch ~/.aws holds only `config` (SSO profiles)
+# plus the sso/ token cache, and no `credentials` file — the vaulted
+# credentials-aws/config-aws in Ansible predate that and are not used.
+# ~/.aws/config is the agenix secret "aws-config" (account ids, SSO start
+# URL), seeded once and then left to `aws configure sso` to edit.
+{ lib, pkgs, ... }:
 {
-  home.packages = with pkgs; [
-    awscli2
-    # awsvpnclient is not in nixpkgs; use the official installer or wrap as AppImage:
-    # (callPackage ../../../pkgs/awsvpnclient { })
-  ];
+  home.packages = [ pkgs.awscli2 ];
 
-  # AWS credentials deployed from agenix secret:
-  # age.secrets.aws-credentials = {
-  #   file = ../../../secrets/aws-credentials.age;
-  #   owner = "frank";
-  # };
-  # home.file.".aws/credentials".source = config.age.secrets.aws-credentials.path;
-
-  # AWS config (non-secret — region, output format)
-  home.file.".aws/config".text = ''
-    [default]
-    region = eu-west-1
-    output = json
+  home.activation.seedAwsConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    if [ ! -e "$HOME/.aws/config" ] && [ -r /run/agenix/aws-config ]; then
+      $DRY_RUN_CMD install -D -m 0600 /run/agenix/aws-config "$HOME/.aws/config"
+    fi
   '';
 }

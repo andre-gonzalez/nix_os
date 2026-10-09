@@ -11,5 +11,7 @@
     ./wifi.nix
     ./kdeconnect.nix
     ./keyring.nix
+    ./onepassword.nix
+    ./uberall-vpn.nix
   ];
 }

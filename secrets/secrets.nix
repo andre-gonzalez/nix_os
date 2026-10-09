@@ -49,14 +49,12 @@ in
   "scripts-env-people.age".publicKeys                     = allHosts;
   "scripts-env-mac-address-proxmox-server.age".publicKeys = allHosts;
 
-  "aws-credentials.age".publicKeys    = [ t14 frank ];
-
-  "neomutt-personal.age".publicKeys   = allHosts;
-  "neomutt-uberall.age".publicKeys    = allHosts;
-  "neomutt-athenaworks.age".publicKeys = allHosts;
-
-  "msmtp.age".publicKeys              = allHosts;
-  "mbsyncrc.age".publicKeys           = allHosts;
+  # Work (home/work/*.nix), imported from the live Arch files — the vaulted
+  # Ansible copies are older (AWS keys before SSO, a past employer's Databricks).
+  "aws-config.age".publicKeys          = allHosts; # ~/.aws/config (SSO profiles)
+  "databrickscfg.age".publicKeys       = allHosts; # ~/.databrickscfg
+  "databricks-connect.age".publicKeys  = allHosts; # ~/.databricks-connect
+  "uberall-vpn.age".publicKeys         = allHosts; # OpenVPN profile (nixos/desktop/uberall-vpn.nix)
 
   "rclone.age".publicKeys             = allHosts;
 }

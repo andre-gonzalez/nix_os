@@ -3,6 +3,8 @@
 #   tasks/ssh.yml           ~/.ssh/personal_id_ed25519_2023-11{,.pub}, ~/.ssh/config
 #   tasks/rclone.yml        ~/.config/rclone/rclone.conf
 #   tasks/linux-scripts.yml ~/.scripts/.env/{instapaper,ipinfo,people,mac-address-proxmox-server}
+#   roles/work             ~/.aws/config, ~/.databrickscfg, ~/.databricks-connect
+#                          (seeded by home/work/{aws,databricks}.nix)
 #
 # agenix is a NixOS module, so the secrets are decrypted to /run/agenix/<name>
 # (owned by frank, 0400) and Home Manager puts them in place. Each one is only
@@ -21,6 +23,9 @@ let
     "scripts-env-ipinfo"
     "scripts-env-people"
     "scripts-env-mac-address-proxmox-server"
+    "aws-config"
+    "databrickscfg"
+    "databricks-connect"
   ];
 
   scriptsEnv = lib.filter has [

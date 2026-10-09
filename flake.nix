@@ -26,7 +26,13 @@
   outputs = { self, nixpkgs, home-manager, agenix, disko, nixos-hardware, ... } @ inputs:
     let
       system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
+      # Not legacyPackages: pkgs/ holds unfree derivations too (databricks-cli),
+      # and legacyPackages has allowUnfree off — the hosts allow it
+      # (base/packages.nix), so customPkgs has to match.
+      pkgs = import nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+      };
       customPkgs = import ./pkgs { inherit pkgs; lib = nixpkgs.lib; };
     in
     {

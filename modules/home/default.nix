@@ -37,11 +37,11 @@
     ./programs/dev-tools.nix
 
     ./work/fonts.nix
-    ./work/neomutt.nix
     ./work/aws.nix
     ./work/datagrip.nix
     ./work/cursor.nix
-    ./work/onepassword.nix
+    ./work/databricks.nix
+    ./work/tools.nix
     ./work/slack.nix
 
     ./services/redshift.nix

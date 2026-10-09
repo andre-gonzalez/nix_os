@@ -11,4 +11,5 @@
   stw           = pkgs.callPackage ./stw/default.nix     {};
   helium        = pkgs.callPackage ./helium/default.nix  {};
   something-x   = pkgs.callPackage ./something-x/default.nix {};
+  databricks-cli = pkgs.callPackage ./databricks-cli/default.nix {};
 }

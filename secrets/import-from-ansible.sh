@@ -8,6 +8,9 @@
 # Usage (from anywhere):
 #   secrets/import-from-ansible.sh                # import everything missing
 #   FORCE=1 secrets/import-from-ansible.sh        # re-encrypt existing files too
+#   secrets/import-from-ansible.sh --file aws-config ~/.aws/config
+#                                                 # encrypt a live file instead
+#                                                 # of a vaulted one
 #   secrets/import-from-ansible.sh --rekey iwd-QUEWIFI-5G
 #                                                 # re-encrypt an existing .age
 #                                                 # file for the recipients now
@@ -125,6 +128,23 @@ wanted() {
     return 1
   fi
 }
+
+if [[ ${1:-} == --file ]]; then
+  name=${2:?usage: --file <secret name without .age> <path>}
+  path=${3:?usage: --file <secret name without .age> <path>}
+  [[ -r $path ]] || { echo "Cannot read $path" >&2; exit 1; }
+  if [[ -e $repo/secrets/$name.age && -z ${FORCE:-} ]]; then
+    echo "skip    $name (exists; FORCE=1 to redo)"; exit 0
+  fi
+  if encrypt "$name" <"$path"; then
+    finalize "$name"
+  else
+    echo "FAILED  $name (from $path)" >&2
+    rm -f "$repo/secrets/$name.age.tmp"
+    exit 1
+  fi
+  exit 0
+fi
 
 if [[ ${1:-} == --rekey ]]; then
   name=${2:?usage: --rekey <secret name without .age>}
