@@ -5,13 +5,22 @@
     ../../modules/nixos/base
     ../../modules/nixos/desktop
     ../../modules/nixos/hardware/btrfs.nix
-    ../../modules/nixos/hardware/disko-btrfs.nix
+    # Full-disk encryption, same layout as t14: LUKS2 + btrfs, /boot inside the
+    # container, swapfile inside it, no hibernation (the old plaintext 16 G
+    # swap partition with resumeDevice is gone). Installed locally from USB
+    # (INSTALL.md), so the passphrase prompt is interactive and the
+    # single-prompt initrd keyfile works.
+    ../../modules/nixos/hardware/disko-btrfs-luks.nix
     ../../modules/nixos/hardware/intel.nix
     # TLP: shared settings + intel_pstate specifics. No ThinkPad module here —
     # this machine has no EC charge thresholds or ACPI platform profile.
     ../../modules/nixos/hardware/power.nix
     ../../modules/nixos/hardware/power-intel.nix
     ../../modules/nixos/services/tailscale.nix
+    # Containers and VMs, as on Arch (the Ansible samsung_expert tag also ran
+    # heavy_workstation).
+    ../../modules/nixos/services/docker.nix
+    ../../modules/nixos/virtualization/libvirt.nix
   ];
 
   networking.hostName = "samsung-expert";
@@ -80,7 +89,7 @@
     efiInstallAsRemovable = true;
   };
   boot.loader.efi.canTouchEfiVariables = false;
-  boot.loader.efi.efiSysMountPoint = "/boot/efi"; # matches disko-btrfs.nix ESP mount
+  boot.loader.efi.efiSysMountPoint = "/boot/efi"; # matches disko-btrfs-luks.nix ESP mount
 
   boot.kernelParams = [
     "lsm=landlock,lockdown,yama,integrity,apparmor,bpf"

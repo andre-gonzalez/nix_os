@@ -60,7 +60,6 @@
     enable = true;
     device = "nodev";
     efiSupport = true;
-    enableCryptodisk = true;
     useOSProber = false;
     default = "saved";
     gfxmodeEfi = "auto";
@@ -69,22 +68,8 @@
   boot.loader.efi.canTouchEfiVariables = true;
   boot.loader.efi.efiSysMountPoint = "/boot/efi"; # matches disko-btrfs-luks.nix ESP mount
 
-  # Single passphrase prompt: GRUB asks once, then hands off to an initrd that
-  # carries a keyfile for the second LUKS key slot. This is only safe because
-  # /boot is itself encrypted, so the embedded key never sits in the clear.
-  #
-  # Gated on local.diskoLuks.useInitrdKeyFile (default true) so that the two
-  # halves — the extra LUKS key slot in disko-btrfs-luks.nix and the initrd
-  # secret here — can never drift apart. hosts/t14/remote-install.nix turns it
-  # off: boot.initrd.secrets is resolved *during* nixos-install, before
-  # nixos-anywhere gets a chance to copy --extra-files into /mnt, so an
-  # unattended install cannot satisfy /boot/crypto_keyfile.bin and would abort
-  # at bootloader installation. Cost of turning it off is one extra passphrase
-  # prompt at boot.
-  boot.initrd.secrets."/crypto_keyfile.bin" =
-    lib.mkIf config.local.diskoLuks.useInitrdKeyFile "/boot/crypto_keyfile.bin";
-  boot.initrd.luks.devices.cryptroot.keyFile =
-    lib.mkIf config.local.diskoLuks.useInitrdKeyFile "/crypto_keyfile.bin";
+  # GRUB cryptodisk and the single-prompt initrd keyfile come from
+  # disko-btrfs-luks.nix (local.diskoLuks.useInitrdKeyFile).
 
   # No boot.resumeDevice / resume_offset: hibernation is deliberately not
   # configured (swap lives in a file inside LUKS, and this machine is s2idle-only).

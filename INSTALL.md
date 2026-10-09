@@ -7,12 +7,21 @@ has no way to rejoin the network), so the remote install stalls right after
 kexec. Instead we install **locally** from a NixOS USB, where WiFi is brought
 up once with `nmtui` and stays up for the whole install.
 
-To let the machine reach the network on its **first boot**, the WiFi PSK is
-stored as an `agenix` secret (`secrets/wifi-queWifi2.age`) that is decrypted at
+The disk is **fully encrypted** (LUKS2 + btrfs, `/boot` inside the container —
+`modules/nixos/hardware/disko-btrfs-luks.nix`, same layout as t14). GRUB asks
+for the passphrase once; the initrd then unlocks with a keyfile from a second
+key slot, so there is a single prompt per boot. Note that GRUB's prompt uses
+the **US keyboard layout**, not dvorak.
+
+⚠️ Re-installing erases the whole disk. Back up `/home/frank` (and, if you want
+the WiFi networks added with `iwctl`, `/var/lib/iwd`) before you start.
+
+To let the machine reach the network on its **first boot**, the WiFi PSKs are
+stored as `agenix` secrets (`secrets/iwd-*.age`) that are decrypted at
 boot using the host SSH key. That host key is pre-generated and kept in
 `.extra-files/samsung-expert/etc/ssh/` (gitignored — it is the private key the
 secret is encrypted to; keep it safe and never commit it). We copy it into
-place manually during the install (step 5 below).
+place manually during the install (step 7 below).
 
 ---
 
@@ -44,7 +53,7 @@ Copy `$OUT` onto a spare USB stick (separate from the NixOS installer USB).
 Sanity-check the bundle before copying:
 
 ```bash
-tar tzf "$OUT" | grep -E 'flake.nix|secrets/wifi-queWifi2.age|extra-files/.*/ssh_host_ed25519_key$'
+tar tzf "$OUT" | grep -E 'flake.nix|secrets/iwd-QUEWIFI-5G.age|extra-files/.*/ssh_host_ed25519_key$'
 ```
 
 You should see the flake, the `.age` secret, and the private host key.
@@ -87,25 +96,36 @@ cp /mnt/src/nixos-install-bundle.tar.gz /root/
 umount /mnt/src
 cd /root && tar xzf nixos-install-bundle.tar.gz && cd nix_os
 
-# 2. Partition + format + mount /dev/sda  (⚠️ ERASES the entire 894G disk)
+# 2. Create the initrd keyfile BEFORE disko runs. disko adds it as the second
+#    LUKS key slot (local.diskoLuks.useInitrdKeyFile, default true).
+dd if=/dev/urandom of=/tmp/crypto_keyfile.bin bs=512 count=8
+chmod 0600 /tmp/crypto_keyfile.bin
+
+# 3. Partition + encrypt + format + mount /dev/sda  (⚠️ ERASES the entire 894G disk)
+#    cryptsetup asks for the new LUKS passphrase here. Type it with the US
+#    layout in mind: GRUB will read it with US keys at every boot.
 #    If this errors on an older disko CLI, use: --mode disko
 nix run github:nix-community/disko/latest -- \
   --mode destroy,format,mount \
   --flake .#samsung-expert
 
-# 3. Generate hardware modules for THIS machine (keeps disko in charge of mounts)
+# 4. Put the keyfile where boot.initrd.secrets expects it (inside LUKS, so
+#    it is never stored in the clear). nixos-install aborts without it.
+install -D -m 0600 /tmp/crypto_keyfile.bin /mnt/boot/crypto_keyfile.bin
+
+# 5. Generate hardware modules for THIS machine (keeps disko in charge of mounts)
 nixos-generate-config --no-filesystems --root /mnt
 cp /mnt/etc/nixos/hardware-configuration.nix hosts/samsung-expert/hardware-configuration.nix
 
-# 4. Install the system (root stays locked; the frank password is baked in)
+# 6. Install the system (root stays locked; the frank password is baked in)
 nixos-install --flake .#samsung-expert --no-root-passwd
 
-# 5. Inject the agenix host key BEFORE reboot, so WiFi decrypts on first boot
+# 7. Inject the agenix host key BEFORE reboot, so the secrets decrypt on first boot
 install -d -m700 /mnt/etc/ssh
 install -m600 .extra-files/samsung-expert/etc/ssh/ssh_host_ed25519_key     /mnt/etc/ssh/ssh_host_ed25519_key
 install -m644 .extra-files/samsung-expert/etc/ssh/ssh_host_ed25519_key.pub /mnt/etc/ssh/ssh_host_ed25519_key.pub
 
-# 6. Reboot, then pull out both USB sticks so it boots from /dev/sda
+# 8. Reboot, then pull out both USB sticks so it boots from /dev/sda
 reboot
 ```
 
@@ -113,8 +133,10 @@ reboot
 
 ## 4. After reboot
 
-`ath10k_pci` brings up the QCA9377, `agenix` decrypts the PSK, and
-`wpa_supplicant` joins `QUEWIFI-5G` automatically. Log in at the console as
+GRUB asks for the LUKS passphrase (US layout), then the machine boots straight
+into the desktop (tty1 autologin). `ath10k_pci` brings up the QCA9377, `agenix`
+decrypts the PSKs into `/var/lib/iwd`, and `iwd` joins a known network
+automatically. Log in at the console as
 `frank`, or SSH from your workstation once it is online:
 
 ```bash
@@ -126,9 +148,9 @@ Find `<ip>` from your router, or run `ip a` on the target console.
 If WiFi does **not** come up on first boot, log in at the console and check:
 
 ```bash
-journalctl -u wpa_supplicant
-systemctl status 'run-agenix*'     # did the secret decrypt?
-ls -l /run/agenix/                 # should contain wifi-queWifi2
+journalctl -u iwd
+journalctl -b | grep -i agenix     # did the secrets decrypt?
+ls -l /var/lib/iwd/                # should contain QUEWIFI-5G.psk and the others
 ```
 
 The most likely culprit is the host-key copy in step 5, not the config —

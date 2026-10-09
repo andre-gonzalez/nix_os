@@ -61,8 +61,9 @@ in
         before nixos-install. See hosts/t14/INSTALL.md.
 
         Set false to accept two passphrase prompts instead (cosmetic only). The
-        host must gate its matching boot.initrd.secrets / boot.initrd.luks
-        keyFile lines on this same option.
+        matching boot.initrd.secrets / boot.initrd.luks keyFile lines live in
+        this module too, gated on this same option, so the extra key slot and
+        its consumer can never drift apart.
       '';
     };
   };
@@ -146,8 +147,23 @@ in
       };
     };
 
+    # /boot is inside the container, so GRUB has to open it itself.
+    boot.loader.grub.enableCryptodisk = true;
+
+    # Single passphrase prompt: GRUB asks once, then hands off to an initrd that
+    # carries a keyfile for the second LUKS key slot. Only safe because /boot —
+    # and so the initrd with the embedded key — is itself encrypted.
+    # useInitrdKeyFile = false (hosts/t14/remote-install.nix) exists because
+    # boot.initrd.secrets is resolved *during* nixos-install, before
+    # nixos-anywhere copies --extra-files into /mnt, so an unattended install
+    # cannot provide /boot/crypto_keyfile.bin in time.
+    boot.initrd.secrets."/crypto_keyfile.bin" =
+      lib.mkIf cfg.useInitrdKeyFile "/boot/crypto_keyfile.bin";
+    boot.initrd.luks.devices.cryptroot.keyFile =
+      lib.mkIf cfg.useInitrdKeyFile "/crypto_keyfile.bin";
+
     # zram is preferred over the disk swapfile (higher priority number wins).
-    # 25% of ~27 GiB ≈ 6.8 G compressed-in-RAM, scaled up from the 4 G used on
+    # 25% of RAM (≈ 6.8 G on the 27 GiB t14), scaled up from the 4 G used on
     # Arch. The 8 G file below it is the overflow tier only.
     zramSwap = {
       enable = true;

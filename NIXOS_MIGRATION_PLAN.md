@@ -714,7 +714,7 @@ boot.kernelParams = [
 
 ### Phase 6 — Samsung Expert Book
 - [ ] Run `nixos-generate-config` on the laptop
-- [ ] Write `hosts/samsung-expert/default.nix` (base + intel + power + tailscale)
+- [ ] Write `hosts/samsung-expert/default.nix` (base + intel + power + tailscale + docker + libvirt, LUKS)
 - [ ] Test TLP + intel-undervolt + WiFi (iwd)
 - [ ] Verify battery life is comparable to Arch
 
