@@ -49,10 +49,11 @@ jobs:
           done
           exit "$failed"
 
+      # From nixpkgs rather than the Docker Hub image: a Docker action is
+      # pulled at job setup, so a Docker Hub timeout failed the whole job
+      # before the eval even ran.
       - name: actionlint
-        uses: docker://rhysd/actionlint:1.7.12
-        with:
-          args: -color
+        run: nix run --inputs-from . nixpkgs#actionlint -- -color
 
   build-servarr:
     name: build servarr
