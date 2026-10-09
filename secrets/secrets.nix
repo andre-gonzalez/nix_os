@@ -41,7 +41,7 @@ in
   "iwd-QueWifi-question.age".publicKeys = allHosts; # SSID "QueWifi?"
   "iwd-Davi.age".publicKeys             = allHosts;
 
-  # frank's personal files (modules/nixos/base/user-secrets.nix).
+  # frank's personal files (modules/nixos/workstation/user-secrets.nix).
   "ssh-personal-key.age".publicKeys     = allHosts; # ~/.ssh/personal_id_ed25519_2023-11
   "ssh-config.age".publicKeys           = allHosts; # ~/.ssh/config
   "scripts-env-instapaper.age".publicKeys                 = allHosts;

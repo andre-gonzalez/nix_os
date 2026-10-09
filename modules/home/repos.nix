@@ -57,7 +57,7 @@ in
 
   # Notes vault: ~/.scripts (todo, add-bookmark, open-file, …), stw's keybind
   # overlay and the push-new-notes timer all read it. Private, so it needs the
-  # ssh key from user-secrets.nix; it is passed explicitly because activation
+  # ssh key from nixos/workstation/user-secrets.nix; it is passed explicitly because activation
   # has no agent, and github's host key is accepted on first use.
   home.activation.cloneNotas = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
     if [ ! -e "${home}/projects/notas" ]; then

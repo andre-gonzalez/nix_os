@@ -18,6 +18,7 @@
     ./hardware-configuration.nix
 
     ../../modules/nixos/base
+    ../../modules/nixos/workstation
     ../../modules/nixos/desktop
     ../../modules/nixos/hardware/btrfs.nix # also provides snapper; services/snapper.nix is a re-export of this
     ../../modules/nixos/hardware/amd.nix

@@ -1,8 +1,9 @@
+# What every host gets, servers included. Laptop-only parts (personal secrets,
+# desktop and dev packages, ClamAV) are in ../workstation.
 { ... }:
 {
   imports = [
     ./users.nix
-    ./user-secrets.nix
     ./locale.nix
     ./packages.nix
     ./ssh.nix

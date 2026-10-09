@@ -49,12 +49,8 @@ in
     "kernel.randomize_va_space" = 2;            # full ASLR
   };
 
-  # roles/light_workstation/tasks/security.yml: ClamAV with its daemon and
-  # signature updates (both running on Arch), plus net-tools.
-  services.clamav = {
-    daemon.enable = true;
-    updater.enable = true;
-  };
+  # ClamAV (roles/light_workstation/tasks/security.yml) is workstation-only:
+  # ../workstation/clamav.nix.
 
   # Linux security modules, as on Arch minus AppArmor (disabled there too).
   # nixpkgs already lists landlock and yama, and appends bpf last; it turns the

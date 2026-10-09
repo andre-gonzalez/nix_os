@@ -1,4 +1,6 @@
-# Mirrors packages installed across roles/base and roles/light_workstation
+# Mirrors packages installed across roles/base and roles/light_workstation.
+# Only what a headless server needs too; desktop, dev and work tools are in
+# ../workstation/packages.nix.
 { pkgs, ... }:
 {
   environment.systemPackages = with pkgs; [
@@ -30,40 +32,16 @@
     lshw
     # rkhunter removed from nixpkgs (see security.nix note)
     inetutils
-    wol
-    ntfs3g
     nfs-utils
-    trash-cli
-    bleachbit
-    tldr
-    pre-commit
 
     # Networking
     nethogs
     tcpdump
-    iw
-    wirelesstools
-
-    # Development
-    gnumake
-    gcc
-    binutils
-    python3
-    python3Packages.pip
-    python3Packages.pipx
-    yamllint
-    ansible
-
-    # AWS
-    awscli2
 
     # Shell helpers
     fish
     tmux
     neovim
-
-    # Clipboard / X utilities (available system-wide)
-    xclip
   ];
 
   # Set neovim as default editor
@@ -78,6 +56,4 @@
 
   # Allow unfree packages (1password, spotify, etc.)
   nixpkgs.config.allowUnfree = true;
-  # JoyPixels ships under a non-free license that must be accepted explicitly.
-  nixpkgs.config.joypixels.acceptLicense = true;
 }
