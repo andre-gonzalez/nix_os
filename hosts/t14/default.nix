@@ -174,11 +174,8 @@
     HandleLidSwitchExternalPower = "suspend";
   };
 
-  # brightnessctl is in systemPackages (desktop/xorg.nix) but that does not
-  # install its udev rules, so XF86MonBrightness* had no way to touch
-  # amdgpu_bl1 without root. frank is already in the `video` group
-  # (base/users.nix). Key bindings live in ~/.xbindkeysrc in the dotfiles repo.
-  services.udev.packages = [ pkgs.brightnessctl ];
+  # brightnessctl's udev rules (backlight writable by the `video` group) are
+  # installed for every desktop host in desktop/xorg.nix.
 
   # Lenovo ships T14 UEFI, EC and Synaptics fingerprint firmware through LVFS.
   services.fwupd.enable = true;

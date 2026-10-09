@@ -39,6 +39,7 @@
     ./services/redshift.nix
     ./services/rclone.nix
     ./services/syncthing.nix
+    ./services/cron-jobs.nix
   ];
 
   home = {

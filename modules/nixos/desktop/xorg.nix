@@ -30,6 +30,13 @@
   # Autologin frank on tty1 (mirrors getty override.conf)
   services.getty.autologinUser = "frank";
 
+  # brightnessctl in systemPackages does not install its udev rules, so without
+  # this the backlight (amdgpu_bl1 on t14, intel_backlight on samsung-expert)
+  # is root-only: XF86MonBrightness* in ~/.xbindkeysrc and the
+  # auto-adjust-brightness timer (home/services/cron-jobs.nix) both run as
+  # frank, who is in the `video` group (base/users.nix).
+  services.udev.packages = [ pkgs.brightnessctl ];
+
   # Polkit agent for GUI privilege elevation
   environment.systemPackages = with pkgs; [
     lxsession
