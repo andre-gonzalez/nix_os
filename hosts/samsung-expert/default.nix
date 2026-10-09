@@ -3,6 +3,7 @@
   imports = [
     ./hardware-configuration.nix
     ../../modules/nixos/base
+    ../../modules/nixos/workstation
     ../../modules/nixos/desktop
     ../../modules/nixos/hardware/btrfs.nix
     # Full-disk encryption, same layout as t14: LUKS2 + btrfs with the swapfile
