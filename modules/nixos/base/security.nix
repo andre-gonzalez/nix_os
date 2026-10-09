@@ -111,7 +111,6 @@ in
   environment.systemPackages = with pkgs; [
     # rkhunter and chkrootkit (both in Ansible) were removed from nixpkgs as
     # unmaintained. For rootkit/host auditing consider `lynis` or `aide`.
-    sysstat
     nettools # ifconfig, netstat, route
   ];
 }

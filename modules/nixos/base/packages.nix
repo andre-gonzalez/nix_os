@@ -28,7 +28,6 @@
     usbutils
     pciutils
     lshw
-    sysstat
     # rkhunter removed from nixpkgs (see security.nix note)
     inetutils
     wol

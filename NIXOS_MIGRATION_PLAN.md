@@ -580,7 +580,7 @@ ansible-vault decrypt --output=- <file> | agenix -e secrets/<name>.age
 | `git-delta` | `pkgs.delta` |
 | `megasync-bin` (AUR) | `pkgs.megasync` or AppImage via `pkgs.appimageTools` |
 | `btrfs-assistant` (AUR) | `pkgs.btrfs-assistant` |
-| `noisetorch-bin` (AUR) | `pkgs.noisetorch` |
+| `noisetorch-bin` (AUR) | dropped (broken with PipeWire 1.x, removed on Arch too) |
 | `dashbinsh` (AUR) | `pkgs.dash` + symlink (`/bin/sh → dash`) |
 | `advcpmv` (AUR) | Build from source in `pkgs/advcpmv/` |
 | `xautolock` | `pkgs.xautolock` |

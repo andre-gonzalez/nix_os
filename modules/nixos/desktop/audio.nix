@@ -19,7 +19,6 @@
     pamixer    # CLI volume control (AUR: pamixer)
     pavucontrol
     alsa-utils  # alsamixer, aplay, amixer (audio.yml)
-    noisetorch  # noise suppression (AUR: noisetorch-bin)
 
     # The *client* tools only — pactl, pacmd, pa-info. services.pulseaudio is
     # off above; these talk to pipewire-pulse, and the dotfiles' .xbindkeysrc

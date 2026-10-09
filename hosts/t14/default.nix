@@ -37,7 +37,7 @@
     #   hardware/nvidia.nix  — no discrete GPU
     #   hardware/power-intel.nix — intel_pstate specifics; power-amd.nix replaces it
     #   services/snapper.nix — thin re-export of hardware/btrfs.nix (double import)
-    #   services/preload.nix — dropped
+    #   services/preload.nix — gone: preload was removed from nixpkgs (broken)
   ];
 
   networking.hostName = "t14";
