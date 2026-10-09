@@ -152,7 +152,14 @@ Tailscale, which step 4 stops on Debian.
    ```
    From a LAN client: `dig example.org @<lan-ip>`. Play something in Jellyfin
    that needs a transcode and check the dashboard shows hardware (VAAPI/QSV).
-8. **Radicale mirror**: `sudo systemctl start radicale-git-push && systemctl status radicale-git-push`.
+8. **Radicale mirror**: the collections repo came from Debian with
+   `core.sshCommand` naming `~/.ssh/radicale_deploy`. Point it at the agenix key
+   (the timer sets its own, this is for pushes by hand), then push once:
+   ```bash
+   git -C /srv/servarr/radicale/collections config core.sshCommand \
+       "ssh -i /run/agenix/servarr-radicale-deploy -o IdentitiesOnly=yes -o ConnectTimeout=10"
+   sudo systemctl start radicale-git-push && systemctl status radicale-git-push
+   ```
 9. **Re-enable deploys** (laptop):
    ```bash
    gh variable set DEPLOY_MODE --body dry-run -R andre-gonzalez/servarr
