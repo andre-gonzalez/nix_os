@@ -1,14 +1,25 @@
-# Build checks for every PR and every push to main.
+# Build checks for every PR and every push to main, and the servarr deploy.
 #
-#   eval           every nixosConfiguration evaluates (laptops included: a
-#                  module shared with servarr must work on unstable AND on
-#                  nixpkgs-stable, which servarr is built from)
-#   build-servarr  servarr's full system closure builds. The laptops are only
-#                  evaluated: their closures (desktop, custom suckless builds)
-#                  are too big for a hosted runner and change more often.
+#   eval            every nixosConfiguration evaluates (laptops included: a
+#                   module shared with servarr must work on unstable AND on
+#                   nixpkgs-stable, which servarr is built from)
+#   build-servarr   servarr's full system closure builds. The laptops are only
+#                   evaluated: their closures (desktop, custom suckless builds)
+#                   are too big for a hosted runner and change more often.
+#   deploy-servarr  push to main (or "Run workflow" on main), after both pass:
+#                   joins the tailnet as an ephemeral tag:ci node and asks the
+#                   server, over SSH as `nixdeploy`, to deploy this commit; it
+#                   fetches, builds and test-activates it itself
+#                   (hosts/servarr/nixos-deploy.sh), then a second connection
+#                   confirms. Setup: hosts/servarr/INSTALL.md, "CI deploys".
 #
-# This repo is public, so these logs are public. Nothing here uses a secret;
-# never add a step that prints a decrypted file or the server's address.
+# The repository variable DEPLOY_MODE gates the deploy: `live`, `dry-run`
+# (build on the server and report, nothing activated), anything else = off.
+#
+# This repo is PUBLIC, so these logs are public. Only the deploy job uses
+# secrets (repository secrets, pushes to main only — never available to a
+# fork's PR); the server prints nothing but shas, store paths and unit names.
+# Never add a step that prints a decrypted file or the server's address.
 
 name: build
 
@@ -68,3 +79,93 @@ jobs:
 
       - name: Build the servarr system closure
         run: nix build --print-build-logs --no-link .#nixosConfigurations.servarr.config.system.build.toplevel
+
+  deploy-servarr:
+    name: deploy servarr
+    needs: [eval, build-servarr]
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      (vars.DEPLOY_MODE == 'live' || vars.DEPLOY_MODE == 'dry-run')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    # One deploy at a time, and a running one is never cancelled (it may be
+    # between activation and confirm). A newer push replaces a queued one.
+    concurrency:
+      group: deploy-servarr-nixos
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write # GitHub OIDC token for Tailscale workload identity
+    steps:
+      - name: Join the tailnet (ephemeral, tag:ci)
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          audience: ${{ secrets.TS_AUDIENCE }}
+          tags: tag:ci
+          ping: ${{ secrets.DEPLOY_HOST }}
+
+      - name: Deploy ${{ github.sha }} (${{ vars.DEPLOY_MODE }})
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_MODE: ${{ vars.DEPLOY_MODE }}
+          SHA: ${{ github.sha }}
+        run: |
+          install -d -m 700 ~/.ssh
+          (umask 077 && printf '%s\n' "$DEPLOY_SSH_KEY" >~/.ssh/deploy_key)
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" >~/.ssh/known_hosts_deploy
+
+          # The key's forced command runs servarr-nixos-deploy as root; what
+          # is sent here only arrives as $SSH_ORIGINAL_COMMAND for it to parse.
+          remote() {
+            ssh -T -p "$DEPLOY_PORT" -i ~/.ssh/deploy_key \
+              -o IdentitiesOnly=yes -o BatchMode=yes \
+              -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts_deploy" \
+              -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=8 \
+              "nixdeploy@$DEPLOY_HOST" "$1"
+          }
+
+          cmd="deploy $SHA"
+          [ "$DEPLOY_MODE" = dry-run ] && cmd="$cmd --dry-run"
+
+          set +e
+          remote "$cmd" 2>&1 | tee deploy.log
+          rc=${PIPESTATUS[0]}
+
+          # 4 = activated, waiting for confirm. 255 = the connection dropped,
+          # possibly mid-activation (the server carries on without us). Either
+          # way confirm over a NEW connection: getting through proves sshd, the
+          # firewall and Tailscale survived the switch. Give up well inside the
+          # server's 5 min revert timer.
+          if [ "$rc" = 4 ] || [ "$rc" = 255 ]; then
+            for _ in 1 2 3 4 5 6; do
+              sleep 15
+              remote "confirm $SHA" 2>&1 | tee -a deploy.log
+              rc=${PIPESTATUS[0]}
+              [ "$rc" = 255 ] || break
+            done
+          fi
+          set -e
+
+          case "$rc" in
+          0) verdict="✅ ${DEPLOY_MODE}: deployed (or nothing to do)" ;;
+          1) verdict="↩️ deploy failed and servarr was switched back" ;;
+          2) verdict="⛔ deploy refused: nothing on the server was changed" ;;
+          3) verdict="🚨 the switch back did not come up clean: needs a human" ;;
+          4) verdict="⏳ activated but never confirmed: the server reverts it on its own" ;;
+          255) verdict="🔌 could not reach the server over SSH (it reverts an unconfirmed switch on its own)" ;;
+          *) verdict="❓ unexpected exit code $rc" ;;
+          esac
+          {
+            echo "### $verdict"
+            echo
+            echo '```'
+            cat deploy.log
+            echo '```'
+          } >>"$GITHUB_STEP_SUMMARY"
+          rm -f ~/.ssh/deploy_key
+          exit "$rc"
