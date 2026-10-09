@@ -73,6 +73,10 @@
     VISUAL = "nvim";
   };
 
+  # dash as /bin/sh — mirrors the AUR `dashbinsh` package on Arch. ~/.scripts
+  # and the dotfiles' sh scripts were written and run against dash there.
+  environment.binsh = "${pkgs.dash}/bin/dash";
+
   # Allow unfree packages (1password, spotify, etc.)
   nixpkgs.config.allowUnfree = true;
   # JoyPixels ships under a non-free license that must be accepted explicitly.

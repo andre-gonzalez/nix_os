@@ -15,6 +15,7 @@
     ./desktop/dunst.nix
     ./desktop/feh.nix
     ./desktop/xbindkeys.nix
+    ./desktop/crash-notify.nix
 
     ./programs/neovim.nix
     ./programs/git.nix
