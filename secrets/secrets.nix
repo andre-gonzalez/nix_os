@@ -23,11 +23,20 @@ let
   # frank's personal key = ~/.ssh/personal_id_ed25519_2023-11 (used to edit secrets).
   frank       = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINsYIPZvhFhETD4PfqryP/yVpVpRW0bYsrwvPxj5uz/R personal_id_ed25519_2023-11";
 
+  # servarr host key — Debian's /etc/ssh/ssh_host_ed25519_key, kept on purpose:
+  # GitHub Actions pins it (DEPLOY_KNOWN_HOSTS in the servarr repo). The private
+  # half is injected at install time via nixos-anywhere --extra-files
+  # (.extra-files/servarr/etc/ssh/…, written by import-from-servarr.sh).
+  servarr     = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOx3ZnckZ6wWSQSZgH5k+kRZZJOin42l18cdQXNqUA1a root@debian-vm";
+
   allHosts = [ t14 samsung frank ];
+  # The server only gets what it needs; it is NOT in allHosts, so a
+  # compromised server cannot decrypt frank's personal and work secrets.
+  servarrOnly = [ servarr frank ];
 in
 {
-  "ssh-port.age".publicKeys           = allHosts;
-  "tailscale-authkey.age".publicKeys  = allHosts;
+  "ssh-port.age".publicKeys           = allHosts ++ [ servarr ];
+  "tailscale-authkey.age".publicKeys  = allHosts ++ [ servarr ];
 
   # iwd network profiles, decrypted to /var/lib/iwd/<SSID>.psk by
   # modules/nixos/desktop/wifi.nix. QUEWIFI-5G lets a fresh install auto-connect
@@ -58,4 +67,11 @@ in
   "uberall-vpn.age".publicKeys         = allHosts; # OpenVPN profile (nixos/desktop/uberall-vpn.nix)
 
   "rclone.age".publicKeys             = allHosts;
+
+  # servarr (hosts/servarr), copied from the Debian server by
+  # secrets/import-from-servarr.sh.
+  "servarr-env.age".publicKeys             = servarrOnly; # /opt/servarr/.env (deploy.nix)
+  "servarr-github-read.age".publicKeys     = servarrOnly; # read-only deploy key, servarr repo (deploy.nix)
+  "servarr-radicale-deploy.age".publicKeys = servarrOnly; # write key, Radicale mirror repo (radicale-push.nix)
+  "servarr-totp.age".publicKeys            = servarrOnly; # frank's ~/.google_authenticator (ssh-totp.nix)
 }

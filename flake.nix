@@ -3,7 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-25.05";
+    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-26.05";
 
     home-manager = {
       url = "github:nix-community/home-manager";
@@ -23,7 +23,7 @@
     nixos-hardware.url = "github:NixOS/nixos-hardware";
   };
 
-  outputs = { self, nixpkgs, home-manager, agenix, disko, nixos-hardware, ... } @ inputs:
+  outputs = { self, nixpkgs, nixpkgs-stable, home-manager, agenix, disko, nixos-hardware, ... } @ inputs:
     let
       system = "x86_64-linux";
       # Not legacyPackages: pkgs/ holds unfree derivations too (databricks-cli),
@@ -87,6 +87,19 @@
             ./hosts/samsung-expert/default.nix
             # nixos-hardware.nixosModules.samsung-galaxy-book  # uncomment closest match
             home-manager.nixosModules.home-manager
+            agenix.nixosModules.default
+            disko.nixosModules.disko
+          ];
+        };
+
+        # Homelab Docker Compose server (Proxmox VM). On nixpkgs-stable, not
+        # unstable like the laptops: it is the LAN's DNS server. No Home
+        # Manager and no customPkgs — base only. See hosts/servarr/INSTALL.md.
+        servarr = nixpkgs-stable.lib.nixosSystem {
+          inherit system;
+          specialArgs = { inherit inputs; };
+          modules = [
+            ./hosts/servarr/default.nix
             agenix.nixosModules.default
             disko.nixosModules.disko
           ];
