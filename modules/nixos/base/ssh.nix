@@ -45,83 +45,95 @@ let
   '';
 in
 {
-  services.openssh = {
-    enable = true;
-
-    # No Port line from the module; the Include below supplies it.
-    ports = [ ];
-    # openFirewall would add the port to the *global* allow list, bypassing the
-    # LAN-only rule in firewall.nix (with ports = [ 22 ] it used to open 22 to
-    # every network this laptop joins).
-    openFirewall = false;
-
-    settings = {
-      PermitRootLogin = "no";
-      PasswordAuthentication = false;
-      KbdInteractiveAuthentication = false;
-      X11Forwarding = false;
-      AllowTcpForwarding = false;
-      AllowAgentForwarding = false;
-      MaxAuthTries = 3;
-      MaxSessions = 2;
-      ClientAliveCountMax = 2;
-      TCPKeepAlive = false;
-      LogLevel = "VERBOSE";
-      # Legal warning banner (`banner` was renamed to settings.Banner)
-      Banner = "/etc/issue.net";
-    };
-
-    # Restrict login to frank only. The Include must stay in the global section
-    # (before any Match block); a missing file is silently skipped by sshd.
-    extraConfig = ''
-      Include ${portConf}
-      AllowUsers frank
+  options.local.ssh.extraAllowUsers = lib.mkOption {
+    type = lib.types.listOf lib.types.str;
+    default = [ ];
+    description = ''
+      Users sshd accepts besides frank (AllowUsers), for service accounts that
+      log in over SSH, like servarr's CI `deploy` user.
     '';
   };
 
-  age.secrets = lib.optionalAttrs (builtins.pathExists portSecret) {
-    ssh-port = {
-      file = portSecret;
-      owner = "root";
-      mode = "0400";
+  config = {
+    services.openssh = {
+      enable = true;
+
+      # No Port line from the module; the Include below supplies it.
+      ports = [ ];
+      # openFirewall would add the port to the *global* allow list, bypassing the
+      # LAN-only rule in firewall.nix (with ports = [ 22 ] it used to open 22 to
+      # every network this laptop joins).
+      openFirewall = false;
+
+      settings = {
+        PermitRootLogin = "no";
+        PasswordAuthentication = false;
+        KbdInteractiveAuthentication = false;
+        X11Forwarding = false;
+        AllowTcpForwarding = false;
+        AllowAgentForwarding = false;
+        MaxAuthTries = 3;
+        MaxSessions = 2;
+        ClientAliveCountMax = 2;
+        TCPKeepAlive = false;
+        LogLevel = "VERBOSE";
+        # Legal warning banner (`banner` was renamed to settings.Banner)
+        Banner = "/etc/issue.net";
+      };
+
+      # Restrict login to frank (plus local.ssh.extraAllowUsers). Both
+      # lines must stay in the global section, before any Match block a host
+      # appends with lib.mkAfter; a missing Include file is silently skipped.
+      extraConfig = ''
+        Include ${portConf}
+        AllowUsers ${lib.concatStringsSep " " ([ "frank" ] ++ config.local.ssh.extraAllowUsers)}
+      '';
     };
-  };
 
-  # Declared ahead of the chains so the input-allow rule can reference it.
-  networking.nftables.tables."nixos-fw".content = lib.mkBefore ''
-    set ssh_port {
-      type inet_service
-    }
-  '';
-
-  systemd.services.ssh-port = {
-    description = "Apply the SSH port from the agenix secret";
-    wantedBy = [ "multi-user.target" ];
-    requiredBy = [ "sshd.service" ];
-    before = [ "sshd.service" ];
-    after = [ "nftables.service" ];
-    requires = [ "nftables.service" ];
-    partOf = [ "nftables.service" ]; # re-run after an nftables restart
-    unitConfig.ReloadPropagatedFrom = [ "nftables.service" ]; # ...and reload
-    # A new secret value changes the .age store path: re-run, restart sshd.
-    restartTriggers = lib.optional (secretPath != null) portSecret;
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      ExecStart = setPort;
-      ExecReload = setPort;
-      RuntimeDirectory = "sshd-port";
-      RuntimeDirectoryPreserve = "yes"; # sshd re-reads it on every restart
+    age.secrets = lib.optionalAttrs (builtins.pathExists portSecret) {
+      ssh-port = {
+        file = portSecret;
+        owner = "root";
+        mode = "0400";
+      };
     };
+
+    # Declared ahead of the chains so the input-allow rule can reference it.
+    networking.nftables.tables."nixos-fw".content = lib.mkBefore ''
+      set ssh_port {
+        type inet_service
+      }
+    '';
+
+    systemd.services.ssh-port = {
+      description = "Apply the SSH port from the agenix secret";
+      wantedBy = [ "multi-user.target" ];
+      requiredBy = [ "sshd.service" ];
+      before = [ "sshd.service" ];
+      after = [ "nftables.service" ];
+      requires = [ "nftables.service" ];
+      partOf = [ "nftables.service" ]; # re-run after an nftables restart
+      unitConfig.ReloadPropagatedFrom = [ "nftables.service" ]; # ...and reload
+      # A new secret value changes the .age store path: re-run, restart sshd.
+      restartTriggers = lib.optional (secretPath != null) portSecret;
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        ExecStart = setPort;
+        ExecReload = setPort;
+        RuntimeDirectory = "sshd-port";
+        RuntimeDirectoryPreserve = "yes"; # sshd re-reads it on every restart
+      };
+    };
+
+    systemd.services.sshd.restartTriggers = lib.optional (secretPath != null) portSecret;
+
+    # Legal banner content
+    environment.etc."issue.net".text = ''
+      ╔══════════════════════════════════════════════════╗
+      ║        AUTHORISED ACCESS ONLY                    ║
+      ║  Unauthorised access is a criminal offence.      ║
+      ╚══════════════════════════════════════════════════╝
+    '';
   };
-
-  systemd.services.sshd.restartTriggers = lib.optional (secretPath != null) portSecret;
-
-  # Legal banner content
-  environment.etc."issue.net".text = ''
-    ╔══════════════════════════════════════════════════╗
-    ║        AUTHORISED ACCESS ONLY                    ║
-    ║  Unauthorised access is a criminal offence.      ║
-    ╚══════════════════════════════════════════════════╝
-  '';
 }

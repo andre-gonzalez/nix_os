@@ -7,6 +7,7 @@ secrets/*
 !secrets/secrets.nix
 !secrets/import-from-ansible.sh
 !secrets/export-gpg-keys.sh
+!secrets/import-from-servarr.sh
 
 # nixos-anywhere --extra-files staging: contains the pre-generated private
 # host key. Never commit this.
