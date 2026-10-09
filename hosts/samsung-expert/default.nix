@@ -79,7 +79,6 @@
     efiSupport = true;
     useOSProber = false;
     default = "saved";
-    timeout = 1;
     # Samsung UEFI firmware does not reliably honor a custom NVRAM boot entry
     # (symptom: "no bootable device", no GRUB menu). Install GRUB to the
     # removable-media fallback path (\EFI\BOOT\BOOTX64.EFI), which firmware
@@ -87,6 +86,7 @@
     # set to false below.
     efiInstallAsRemovable = true;
   };
+  boot.loader.timeout = 1; # was boot.loader.grub.timeout (renamed upstream)
   boot.loader.efi.canTouchEfiVariables = false;
   boot.loader.efi.efiSysMountPoint = "/boot"; # matches disko-btrfs-luks.nix ESP mount
 
