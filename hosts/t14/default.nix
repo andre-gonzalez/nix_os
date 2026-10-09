@@ -30,7 +30,6 @@
     ../../modules/nixos/services/tailscale.nix
     ../../modules/nixos/services/docker.nix
     ../../modules/nixos/virtualization/libvirt.nix
-    ../../modules/nixos/virtualization/windows-vm.nix
 
     # Deliberately NOT imported:
     #   hardware/intel.nix   — sets LIBVA_DRIVER_NAME=iHD and i915.* params globally

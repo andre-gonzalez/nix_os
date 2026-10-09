@@ -1,5 +1,6 @@
 # Working copies that the session depends on — mirrors
-# roles/light_workstation/tasks/{dotfiles,notas,directory}.yml.
+# roles/light_workstation/tasks/{dotfiles,notas,directory}.yml and
+# roles/heavy_workstation/tasks/windows-vm.yml.
 #
 # Same bargain as ~/.scripts (scripts.nix): the content is imperative and gets
 # edited and pushed in place, so it is a clone, not a store path. Activation
@@ -34,6 +35,22 @@ in
         dot checkout -f
       else
         echo "warning: could not clone the dotfiles repo; retrying on next rebuild"
+      fi
+    fi
+  '';
+
+  # Windows in Docker (dockurr/windows): only a compose.yml, run by hand with
+  # `docker compose up` — needs /dev/kvm (docker.nix) and nothing else here.
+  # compose.yml binds 8006/3389 to 127.0.0.1 (since 2a5a99b): Docker publishes
+  # ports past the nftables input chain, so 0.0.0.0 meant every network.
+  home.activation.cloneWindowsDocker = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+    if [ ! -e "${home}/projects/windows-docker" ]; then
+      if $DRY_RUN_CMD ${git} clone --quiet \
+           https://github.com/andre-gonzalez/windows_docker.git "${home}/projects/windows-docker"; then
+        $DRY_RUN_CMD ${git} -C "${home}/projects/windows-docker" remote set-url --push origin \
+          git@github.com:andre-gonzalez/windows_docker.git
+      else
+        echo "warning: could not clone windows_docker; retrying on next rebuild"
       fi
     fi
   '';
