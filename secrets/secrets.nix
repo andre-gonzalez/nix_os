@@ -7,9 +7,7 @@
 # To populate your personal age key:
 #   nix run nixpkgs#age -- -keygen -o ~/.config/sops/age/keys.txt
 #
-# To re-encrypt an ansible-vault secret:
-#   ansible-vault decrypt --vault-password-file ~/ansi-vault-pass <file> --output - \
-#     | agenix -e secrets/<name>.age
+# To re-encrypt the ansible-vault secrets: secrets/import-from-ansible.sh
 
 let
   # agenix uses SSH keys directly as recipients (age's native ssh support),
@@ -31,10 +29,25 @@ in
   "ssh-port.age".publicKeys           = allHosts;
   "tailscale-authkey.age".publicKeys  = allHosts;
 
-  # iwd network profile, deployed to /var/lib/iwd/QUEWIFI-5G.psk so the machine
-  # auto-connects headless on first boot. Other networks are added at runtime
-  # with `iwctl` (iwd persists them in /var/lib/iwd).
-  "iwd-QUEWIFI-5G.age".publicKeys     = [ t14 samsung frank ];
+  # iwd network profiles, decrypted to /var/lib/iwd/<SSID>.psk by
+  # modules/nixos/desktop/wifi.nix. QUEWIFI-5G lets a fresh install auto-connect
+  # headless on first boot; the rest are the networks the Ansible role shipped.
+  # Others are added at runtime with `iwctl` (iwd persists them).
+  "iwd-QUEWIFI-5G.age".publicKeys       = allHosts;
+  "iwd-Lopes.age".publicKeys            = allHosts;
+  "iwd-LNAM5.age".publicKeys            = allHosts;
+  "iwd-QueWiFi2.age".publicKeys         = allHosts;
+  "iwd-CasaRio_5G.age".publicKeys       = allHosts;
+  "iwd-QueWifi-question.age".publicKeys = allHosts; # SSID "QueWifi?"
+  "iwd-Davi.age".publicKeys             = allHosts;
+
+  # frank's personal files (modules/nixos/base/user-secrets.nix).
+  "ssh-personal-key.age".publicKeys     = allHosts; # ~/.ssh/personal_id_ed25519_2023-11
+  "ssh-config.age".publicKeys           = allHosts; # ~/.ssh/config
+  "scripts-env-instapaper.age".publicKeys                 = allHosts;
+  "scripts-env-ipinfo.age".publicKeys                     = allHosts;
+  "scripts-env-people.age".publicKeys                     = allHosts;
+  "scripts-env-mac-address-proxmox-server.age".publicKeys = allHosts;
 
   "aws-credentials.age".publicKeys    = [ t14 frank ];
 

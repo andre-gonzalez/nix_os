@@ -8,5 +8,6 @@
     ./printing.nix
     ./fonts.nix
     ./autorandr.nix
+    ./wifi.nix
   ];
 }

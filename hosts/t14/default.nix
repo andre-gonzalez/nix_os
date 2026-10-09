@@ -97,33 +97,9 @@
   ##############################################################################
   # WiFi — MediaTek MT7925 (mt7925e), firmware from linux-firmware above.
   ##############################################################################
-  # iwd rather than NetworkManager: all known networks are PSK or open, no
-  # 802.1X anywhere. iwd runs its own DHCP and hands DNS to systemd-resolved.
-  networking.wireless.iwd = {
-    enable = true;
-    settings = {
-      General.EnableNetworkConfiguration = true;
-      Network.NameResolvingService = "systemd";
-    };
-  };
-
-  systemd.tmpfiles.rules = [
-    # agenix places the profile below during activation, before iwd.service
-    # gets a chance to create its StateDirectory.
-    "d /var/lib/iwd 0700 root root -"
-  ];
-
-  # Seed the home network so the machine auto-connects on first boot. The other
-  # ~15 known networks come back by restoring /var/lib/iwd from the pre-wipe
+  # iwd and the known networks: modules/nixos/desktop/wifi.nix. Networks not in
+  # the Ansible vault come back by restoring /var/lib/iwd from the pre-wipe
   # backup (see INSTALL.md).
-  age.secrets."iwd-QUEWIFI-5G" = {
-    file = ../../secrets/iwd-QUEWIFI-5G.age;
-    path = "/var/lib/iwd/QUEWIFI-5G.psk";
-    mode = "0600";
-    owner = "root";
-    group = "root";
-    symlink = false; # iwd needs a real file with strict perms, not a symlink
-  };
 
   ##############################################################################
   # Fingerprint — Synaptics [06cb:00f9], supported by libfprint's PID table.
