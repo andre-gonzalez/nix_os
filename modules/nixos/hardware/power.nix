@@ -61,5 +61,7 @@
     powertop
     acpi
     acpid
+    smartmontools # smartctl: disk health, and TLP's disk APM reporting (save-battery.yml)
+    ethtool       # TLP's wake-on-LAN handling (save-battery.yml)
   ];
 }

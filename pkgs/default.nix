@@ -9,4 +9,6 @@
   dwmblocks     = pkgs.callPackage ./dwmblocks/default.nix {};
   wall-d        = pkgs.callPackage ./wall-d/default.nix  {};
   stw           = pkgs.callPackage ./stw/default.nix     {};
+  helium        = pkgs.callPackage ./helium/default.nix  {};
+  something-x   = pkgs.callPackage ./something-x/default.nix {};
 }

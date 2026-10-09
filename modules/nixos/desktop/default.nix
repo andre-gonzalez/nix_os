@@ -10,5 +10,6 @@
     ./autorandr.nix
     ./wifi.nix
     ./kdeconnect.nix
+    ./keyring.nix
   ];
 }

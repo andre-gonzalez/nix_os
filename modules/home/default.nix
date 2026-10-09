@@ -30,6 +30,11 @@
     ./programs/anki.nix
     ./programs/calibre.nix
     ./programs/zoxide.nix
+    ./programs/browsers.nix
+    ./programs/spotify.nix
+    ./programs/office.nix
+    ./programs/ente-auth.nix
+    ./programs/dev-tools.nix
 
     ./work/fonts.nix
     ./work/neomutt.nix
@@ -43,6 +48,7 @@
     ./services/rclone.nix
     ./services/syncthing.nix
     ./services/cron-jobs.nix
+    ./services/insync.nix
   ];
 
   home = {

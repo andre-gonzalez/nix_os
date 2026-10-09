@@ -24,5 +24,8 @@
     wantedBy = [ "default.target" ];
   };
 
-  environment.systemPackages = [ pkgs.bluez ];
+  environment.systemPackages = [
+    pkgs.bluez
+    pkgs.bluez-tools # bt-device, bt-adapter, bt-agent (bluetooth.yml)
+  ];
 }

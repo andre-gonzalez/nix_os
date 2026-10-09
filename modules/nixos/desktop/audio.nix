@@ -18,6 +18,7 @@
   environment.systemPackages = with pkgs; [
     pamixer    # CLI volume control (AUR: pamixer)
     pavucontrol
+    alsa-utils  # alsamixer, aplay, amixer (audio.yml)
     noisetorch  # noise suppression (AUR: noisetorch-bin)
 
     # The *client* tools only — pactl, pacmd, pa-info. services.pulseaudio is
