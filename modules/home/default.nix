@@ -2,6 +2,7 @@
 {
   imports = [
     ./scripts.nix
+    ./repos.nix
 
     ./shell/fish.nix
     ./shell/tmux.nix
@@ -16,6 +17,8 @@
     ./desktop/feh.nix
     ./desktop/xbindkeys.nix
     ./desktop/crash-notify.nix
+    ./desktop/gtk-theme.nix
+    ./desktop/x-tools.nix
 
     ./programs/neovim.nix
     ./programs/git.nix

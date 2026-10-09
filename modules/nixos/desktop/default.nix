@@ -9,5 +9,6 @@
     ./fonts.nix
     ./autorandr.nix
     ./wifi.nix
+    ./kdeconnect.nix
   ];
 }

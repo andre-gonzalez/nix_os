@@ -31,6 +31,7 @@
 
       # Additional
       font-awesome
+      symbola                  # ttf-symbola on Arch (lfub task): symbol/emoji fallback
     ];
 
     fontconfig = {
