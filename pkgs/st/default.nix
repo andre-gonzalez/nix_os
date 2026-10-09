@@ -1,5 +1,5 @@
 # st — simple terminal from andre-gonzalez's private repo
-{ stdenv, lib, xorg, harfbuzz, fontconfig, freetype, ncurses }:
+{ stdenv, lib, libx11, libxft, harfbuzz, fontconfig, freetype, ncurses }:
 stdenv.mkDerivation {
   pname = "st";
   version = "unstable";
@@ -14,8 +14,8 @@ stdenv.mkDerivation {
   # the st terminfo entry.
   nativeBuildInputs = [ ncurses ];
 
-  buildInputs = with xorg; [
-    libX11 libXft
+  buildInputs = [
+    libx11 libxft
     harfbuzz fontconfig freetype
   ];
 

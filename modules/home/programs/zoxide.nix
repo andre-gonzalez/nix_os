@@ -11,9 +11,9 @@
     enableFishIntegration = true;
     defaultCommand = "fd --type f --hidden --follow --exclude .git";
     defaultOptions = [ "--height 40%" "--layout=reverse" "--border" ];
-    fileWidgetCommand = "fd --type f --hidden --follow --exclude .git";
-    changeDirWidgetCommand = "fd --type d --hidden --follow --exclude .git";
-    historyWidgetOptions = [ "--sort" "--exact" ];
+    fileWidget.command = "fd --type f --hidden --follow --exclude .git";
+    changeDirWidget.command = "fd --type d --hidden --follow --exclude .git";
+    historyWidget.options = [ "--sort" "--exact" ];
     colors = {
       bg      = "#1e1e2e";
       "bg+"   = "#313244";
