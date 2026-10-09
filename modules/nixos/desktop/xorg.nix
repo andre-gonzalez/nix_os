@@ -13,11 +13,14 @@
   services.xserver = {
     enable = true;
 
-    # Dvorak keyboard layout in X11 (mirrors setxkbmap in .xinitrc)
+    # Mirrors roles/light_workstation/files/00-keyboard.conf, which is also
+    # what .xinitrc's setxkbmap applies: Dvorak with dead keys for accents,
+    # Caps Lock and Escape swapped, Ctrl+Alt+Backspace kills X.
     xkb = {
       layout = "us";
-      variant = "dvorak";
-      options = "caps:escape"; # caps lock → escape (common for vim users)
+      model = "pc105";
+      variant = "dvorak-intl";
+      options = "caps:swapescape,terminate:ctrl_alt_bksp";
     };
 
     # No display manager — frank runs startx from tty1
@@ -29,6 +32,13 @@
 
   # Autologin frank on tty1 (mirrors getty override.conf)
   services.getty.autologinUser = "frank";
+
+  # brightnessctl in systemPackages does not install its udev rules, so without
+  # this the backlight (amdgpu_bl1 on t14, intel_backlight on samsung-expert)
+  # is root-only: XF86MonBrightness* in ~/.xbindkeysrc and the
+  # auto-adjust-brightness timer (home/services/cron-jobs.nix) both run as
+  # frank, who is in the `video` group (base/users.nix).
+  services.udev.packages = [ pkgs.brightnessctl ];
 
   # Polkit agent for GUI privilege elevation
   environment.systemPackages = with pkgs; [

@@ -4,6 +4,8 @@
 {
   home.packages = with pkgs; [
     lf
+    ueberzugpp # image previews through ~/.scripts/lfub (lfrc, scope)
+    sxiv       # lfrc opens images with it
     bat
     chafa
     ffmpegthumbnailer

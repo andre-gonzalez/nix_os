@@ -18,7 +18,7 @@
   environment.systemPackages = with pkgs; [
     pamixer    # CLI volume control (AUR: pamixer)
     pavucontrol
-    noisetorch  # noise suppression (AUR: noisetorch-bin)
+    alsa-utils  # alsamixer, aplay, amixer (audio.yml)
 
     # The *client* tools only — pactl, pacmd, pa-info. services.pulseaudio is
     # off above; these talk to pipewire-pulse, and the dotfiles' .xbindkeysrc

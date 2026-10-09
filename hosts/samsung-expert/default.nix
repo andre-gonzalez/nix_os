@@ -5,13 +5,21 @@
     ../../modules/nixos/base
     ../../modules/nixos/desktop
     ../../modules/nixos/hardware/btrfs.nix
-    ../../modules/nixos/hardware/disko-btrfs.nix
+    # Full-disk encryption, same layout as t14: LUKS2 + btrfs with the swapfile
+    # inside, /boot on the ESP, one Dvorak passphrase prompt in the initrd. No
+    # hibernation (the old plaintext 16 G swap partition with resumeDevice is
+    # gone).
+    ../../modules/nixos/hardware/disko-btrfs-luks.nix
     ../../modules/nixos/hardware/intel.nix
     # TLP: shared settings + intel_pstate specifics. No ThinkPad module here —
     # this machine has no EC charge thresholds or ACPI platform profile.
     ../../modules/nixos/hardware/power.nix
     ../../modules/nixos/hardware/power-intel.nix
     ../../modules/nixos/services/tailscale.nix
+    # Containers and VMs, as on Arch (the Ansible samsung_expert tag also ran
+    # heavy_workstation).
+    ../../modules/nixos/services/docker.nix
+    ../../modules/nixos/virtualization/libvirt.nix
   ];
 
   networking.hostName = "samsung-expert";
@@ -36,35 +44,9 @@
   # was carried over from the previous host and has been removed.
   hardware.enableRedistributableFirmware = true;
 
-  # WiFi via iwd (replaces wpa_supplicant; gives us `iwctl` for roaming). iwd
-  # lets its built-in DHCP client configure the link and hands DNS to
-  # systemd-resolved.
-  networking.wireless.iwd = {
-    enable = true;
-    settings = {
-      General.EnableNetworkConfiguration = true; # iwd runs DHCP
-      Network.NameResolvingService = "systemd";  # integrate with systemd-resolved
-    };
-  };
-
-  # Seed the home network as an iwd profile so the machine auto-connects headless
-  # on first boot (no wired fallback). agenix decrypts the profile (using the
-  # host key injected at install via --extra-files) directly to
-  # /var/lib/iwd/QUEWIFI-5G.psk — a real file (symlink = false) with 0600 perms,
-  # as iwd requires. Additional networks are added at runtime with `iwctl`.
-  systemd.tmpfiles.rules = [
-    # Ensure iwd's state dir exists before agenix places the profile in it
-    # (agenix runs during activation, before iwd.service creates StateDirectory).
-    "d /var/lib/iwd 0700 root root -"
-  ];
-  age.secrets."iwd-QUEWIFI-5G" = {
-    file = ../../secrets/iwd-QUEWIFI-5G.age;
-    path = "/var/lib/iwd/QUEWIFI-5G.psk";
-    mode = "0600";
-    owner = "root";
-    group = "root";
-    symlink = false; # iwd needs a real file with strict perms, not a symlink
-  };
+  # WiFi (iwd + known networks): modules/nixos/desktop/wifi.nix. The QUEWIFI-5G
+  # profile lets this machine auto-connect headless on first boot (no wired
+  # fallback); agenix decrypts it with the host key injected via --extra-files.
 
   # Hybrid graphics: Intel UHD 620 (drives the laptop panel) + discrete NVIDIA
   # MX110 [10de:174e]. nouveau was claiming /dev/dri/card0 (the NVIDIA GPU,
@@ -97,7 +79,6 @@
     efiSupport = true;
     useOSProber = false;
     default = "saved";
-    timeout = 1;
     # Samsung UEFI firmware does not reliably honor a custom NVRAM boot entry
     # (symptom: "no bootable device", no GRUB menu). Install GRUB to the
     # removable-media fallback path (\EFI\BOOT\BOOTX64.EFI), which firmware
@@ -105,13 +86,13 @@
     # set to false below.
     efiInstallAsRemovable = true;
   };
+  boot.loader.timeout = 1; # was boot.loader.grub.timeout (renamed upstream)
   boot.loader.efi.canTouchEfiVariables = false;
-  boot.loader.efi.efiSysMountPoint = "/boot/efi"; # matches disko-btrfs.nix ESP mount
+  boot.loader.efi.efiSysMountPoint = "/boot"; # matches disko-btrfs-luks.nix ESP mount
 
-  boot.kernelParams = [
-    "lsm=landlock,lockdown,yama,integrity,apparmor,bpf"
-    "audit=1"
-  ];
+  # No lsm= kernel param here: base/security.nix sets security.lsm, which
+  # nixpkgs turns into the one lsm= param; a second one here would win and
+  # drop modules.
 
   home-manager = {
     useGlobalPkgs = true;

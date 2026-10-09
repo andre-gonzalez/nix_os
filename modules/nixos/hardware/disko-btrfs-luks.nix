@@ -6,7 +6,7 @@
 # Override the device per-host with:  disko.devices.disk.main.device = "/dev/nvme0n1";
 #
 # Layout:
-#   ESP   512M vfat  -> /boot/efi     (GRUB EFI binary only)
+#   ESP   1G   vfat  -> /boot         (GRUB, kernels, initrds — unencrypted)
 #   luks  100%       -> btrfs
 #           @        -> /             compress=zstd,noatime
 #           @home    -> /home         compress=zstd,noatime
@@ -19,9 +19,14 @@
 #     partition outside the encrypted container with resumeDevice = true; under
 #     LUKS that leaks RAM contents to disk in the clear. Here swap is a file
 #     *inside* the encrypted btrfs, and hibernation is not configured at all.
-#   * /boot lives inside LUKS (on the @ subvolume), so kernels and initrds are
-#     encrypted too. That requires GRUB to open the container itself — see
-#     enableCryptodisk in the host file and the pbkdf2 note below.
+#
+# /boot is deliberately OUTSIDE the container, as it was on Arch. An encrypted
+# /boot makes GRUB unlock LUKS, and GRUB reads the passphrase with a US keymap
+# before it can load any other (the unlock happens in its core image, ahead of
+# grub.cfg) — unusable with a Dvorak-typed passphrase. Here the initrd unlocks
+# instead, after console.earlySetup has loaded the Dvorak keymap (base/locale.nix):
+# one prompt, Dvorak, and LUKS can keep cryptsetup's default argon2id, which
+# GRUB 2.12 cannot read. Kernels and initrds are in the clear, as on Arch.
 { config, lib, ... }:
 let
   cfg = config.local.diskoLuks;
@@ -44,27 +49,6 @@ in
         this and ship the file with `--disk-encryption-keys`.
       '';
     };
-
-    useInitrdKeyFile = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = ''
-        Add /tmp/crypto_keyfile.bin as a second LUKS key slot, so the initrd can
-        unlock without a second passphrase prompt (GRUB asks once and hands off).
-        Safe only because /boot — and therefore the initrd carrying the embedded
-        key — is itself inside the container.
-
-        Requires the keyfile to exist BEFORE disko runs:
-          dd if=/dev/urandom of=/tmp/crypto_keyfile.bin bs=512 count=8
-          chmod 0600 /tmp/crypto_keyfile.bin
-        and to be copied to /mnt/boot/crypto_keyfile.bin (0600) after mount,
-        before nixos-install. See hosts/t14/INSTALL.md.
-
-        Set false to accept two passphrase prompts instead (cosmetic only). The
-        host must gate its matching boot.initrd.secrets / boot.initrd.luks
-        keyFile lines on this same option.
-      '';
-    };
   };
 
   config = {
@@ -79,14 +63,14 @@ in
               ESP = {
                 priority = 1;
                 name = "ESP";
-                size = "512M";
+                # Holds every kernel/initrd pair GRUB can boot; see
+                # configurationLimit below.
+                size = "1G";
                 type = "EF00";
                 content = {
                   type = "filesystem";
                   format = "vfat";
-                  # Mounted at /boot/efi, not /boot: /boot is on the encrypted
-                  # btrfs so only the GRUB EFI binary sits in the clear.
-                  mountpoint = "/boot/efi";
+                  mountpoint = "/boot";
                   mountOptions = [ "umask=0077" ];
                 };
               };
@@ -97,23 +81,14 @@ in
                 content = {
                   type = "luks";
                   name = "cryptroot";
-                  # GRUB 2.12 in this nixpkgs pin carries no argon2 patch, so a
-                  # default (argon2id) LUKS2 header is unreadable to it and the
-                  # machine will not boot. Force the PBKDF back to pbkdf2.
-                  extraFormatArgs = [ "--pbkdf" "pbkdf2" ];
-
                   # null => interactive prompt (local ISO install).
                   passwordFile = cfg.passwordFile;
-
-                  # Second key slot for the initrd; see the option description.
-                  additionalKeyFiles =
-                    lib.optionals cfg.useInitrdKeyFile [ "/tmp/crypto_keyfile.bin" ];
 
                   content = {
                     type = "btrfs";
                     extraArgs = [ "-f" ]; # force overwrite any existing filesystem
                     subvolumes = {
-                      # Snapshotted by snapper (config "root"). Carries /boot.
+                      # Snapshotted by snapper (config "root")
                       "@" = {
                         mountpoint = "/";
                         mountOptions = [ "compress=zstd" "noatime" ];
@@ -146,8 +121,12 @@ in
       };
     };
 
+    # Every NixOS generation keeps its kernel + initrd on the 1 G ESP. Cap the
+    # GRUB menu so old ones are removed before it fills up.
+    boot.loader.grub.configurationLimit = 10;
+
     # zram is preferred over the disk swapfile (higher priority number wins).
-    # 25% of ~27 GiB ≈ 6.8 G compressed-in-RAM, scaled up from the 4 G used on
+    # 25% of RAM (≈ 6.8 G on the 27 GiB t14), scaled up from the 4 G used on
     # Arch. The 8 G file below it is the overflow tier only.
     zramSwap = {
       enable = true;

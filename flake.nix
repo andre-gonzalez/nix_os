@@ -26,7 +26,13 @@
   outputs = { self, nixpkgs, home-manager, agenix, disko, nixos-hardware, ... } @ inputs:
     let
       system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
+      # Not legacyPackages: pkgs/ holds unfree derivations too (databricks-cli),
+      # and legacyPackages has allowUnfree off — the hosts allow it
+      # (base/packages.nix), so customPkgs has to match.
+      pkgs = import nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+      };
       customPkgs = import ./pkgs { inherit pkgs; lib = nixpkgs.lib; };
     in
     {
@@ -54,8 +60,8 @@
         };
 
         # Same host, reshaped for an unattended nixos-anywhere install onto a
-        # test machine: LUKS passphrase from a file, no initrd keyfile, no
-        # agenix, its own hardware scan. See hosts/t14/remote-install.nix.
+        # test machine: LUKS passphrase from a file, no agenix, its own
+        # hardware scan. See hosts/t14/remote-install.nix.
         t14-remote = nixpkgs.lib.nixosSystem {
           inherit system;
           specialArgs = { inherit inputs customPkgs; };

@@ -69,30 +69,16 @@ derivation's `postPatch` (distro-specific, so it stays out of the fork).
 
 1. Boot the NixOS ISO on the T14, clone this repo.
 
-2. **Create the initrd keyfile before disko runs** (this is the second LUKS key
-   slot that gives a single passphrase prompt):
+2. **Partition, format, mount** — ⚠️ erases `/dev/nvme0n1`, prompts for the new
+   LUKS passphrase. The ISO console is US layout until you run `loadkeys dvorak`;
+   do that first, so the passphrase you set is the one you will type at the
+   Dvorak initrd prompt on every boot:
    ```
-   dd if=/dev/urandom of=/tmp/crypto_keyfile.bin bs=512 count=8
-   chmod 0600 /tmp/crypto_keyfile.bin
-   ```
-   To skip this and accept two prompts instead (GRUB, then initrd — cosmetic
-   only), set `local.diskoLuks.useInitrdKeyFile = false;` in
-   `hosts/t14/default.nix`. That single switch drops both halves at once — the
-   extra LUKS key slot in `modules/nixos/hardware/disko-btrfs-luks.nix` and the
-   `boot.initrd.secrets` / `boot.initrd.luks…keyFile` lines that consume it.
-
-3. **Partition, format, mount** — ⚠️ erases `/dev/nvme0n1`, prompts for the new
-   LUKS passphrase:
-   ```
+   loadkeys dvorak
    nix run github:nix-community/disko -- --mode destroy,format,mount --flake .#t14
    ```
 
-4. **Place the keyfile inside encrypted /boot** (skip if step 2 was skipped):
-   ```
-   install -m 0600 /tmp/crypto_keyfile.bin /mnt/boot/crypto_keyfile.bin
-   ```
-
-5. **Generate hardware config**, overwriting the committed placeholder, and
+3. **Generate hardware config**, overwriting the committed placeholder, and
    commit the result (`hosts/t14/default.nix` already imports the path):
    ```
    nixos-generate-config --no-filesystems --root /mnt
@@ -100,20 +86,20 @@ derivation's `postPatch` (distro-specific, so it stays out of the fork).
    ```
    `--no-filesystems` keeps disko in charge of mounts.
 
-6. **Install:**
+4. **Install:**
    ```
    nixos-install --flake .#t14 --no-root-password
    ```
 
-7. **Inject the agenix host key BEFORE reboot** — otherwise agenix cannot
-   decrypt the WiFi PSK on first boot:
+5. **Inject the agenix host key BEFORE reboot** — otherwise agenix cannot
+   decrypt the WiFi PSKs and the other secrets on first boot:
    ```
    install -d -m 0755 /mnt/etc/ssh
    install -m 0600 .extra-files/t14/etc/ssh/ssh_host_ed25519_key     /mnt/etc/ssh/
    install -m 0644 .extra-files/t14/etc/ssh/ssh_host_ed25519_key.pub /mnt/etc/ssh/
    ```
 
-8. Reboot, remove the USB.
+6. Reboot, remove the USB.
 
 ---
 
@@ -131,10 +117,10 @@ derivation's `postPatch` (distro-specific, so it stays out of the fork).
 
 - `.xinitrc`'s commented xrandr block references `eDP-1` / `HDMI-1`. On amdgpu
   the outputs are **`eDP`** and **`HDMI-A-0`**.
-- Keyboard variant disagrees in four places (`postswitch` → `dvorak-intl` +
-  `caps:escape`, `.xinitrc` → `dvorak-intl` + `caps:swapescape`,
-  `desktop/xorg.nix` → `dvorak` + `caps:escape`, `base/locale.nix` console →
-  `dvorak`). Reconcile on `dvorak-intl`.
+- Keyboard: `desktop/xorg.nix`, `.xinitrc` and `~/.config/autorandr/postswitch`
+  all set `dvorak-intl` + `caps:swapescape,terminate:ctrl_alt_bksp` now.
+  `postswitch` is not tracked in the dotfiles repo — it survives only through
+  the backup above.
 - Add brightness bindings to `.xbindkeysrc` (the udev rules are installed by
   `services.udev.packages = [ pkgs.brightnessctl ]`):
   ```
@@ -153,7 +139,7 @@ derivation's `postPatch` (distro-specific, so it stays out of the fork).
 | GPU | `lsmod \| grep amdgpu`; `vainfo` reports **radeonsi**; `glxinfo -B` shows Radeon 860M |
 | Fingerprint | `fprintd-list frank`; `sudo -k && sudo -v` prompts for finger, Ctrl-C falls back to password |
 | slock | locks and **unlocks by finger**; confirm it no longer dies on `getgrnam` |
-| Boot | one passphrase prompt (or two, if the initrd keyfile was skipped) |
+| Boot | one passphrase prompt, in the initrd, Dvorak layout |
 | Swap | `swapon --show` — zram at priority 100, `/swap/swapfile` below it |
 | Power | `tlp-stat -p` shows governor `powersave` + EPP `balance_performance`/`balance_power` |
 | Battery | `cat /sys/class/power_supply/BAT0/charge_control_{start,end}_threshold` → `77` / `80` |
@@ -174,8 +160,8 @@ to the setuid `unix_chkpwd` helper. Verify first, remove in a follow-up.
 
 Installs the T14 config onto *someone else's* box over ssh, disk encryption
 included. Uses the `.#t14-remote` flake output (`hosts/t14/remote-install.nix`),
-which differs from `.#t14` in four ways only — passphrase from a file, no initrd
-keyfile, no agenix, its own hardware scan. The reasoning for each is in the
+which differs from `.#t14` in three ways only — passphrase from a file, no
+agenix, its own hardware scan. The reasoning for each is in the
 header of that file. Hostname becomes `t14-test`.
 
 ⚠️ This **erases the target's disk**. It is also, unavoidably, *your* config:
@@ -251,8 +237,9 @@ ls /sys/firmware/efi >/dev/null 2>&1 && echo "UEFI ✅" || echo "LEGACY ❌"
 
 ### 6.3 After it reboots
 
-- **Two passphrase prompts** at boot — GRUB, then the initrd. Expected here; the
-  single-prompt keyfile is only used by the local install of the real T14.
+- One passphrase prompt at boot, in the initrd, **Dvorak** layout. The
+  passphrase file was written on your machine, so type the same keys you typed
+  into the install script.
 - No WiFi profile is seeded (no agenix). Log in as `frank` and use
   `iwctl station wlan0 connect <ssid>`.
 - `~/.scripts` clones itself on activation, but activation runs at boot, when

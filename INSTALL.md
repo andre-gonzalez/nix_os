@@ -7,8 +7,16 @@ has no way to rejoin the network), so the remote install stalls right after
 kexec. Instead we install **locally** from a NixOS USB, where WiFi is brought
 up once with `nmtui` and stays up for the whole install.
 
-To let the machine reach the network on its **first boot**, the WiFi PSK is
-stored as an `agenix` secret (`secrets/wifi-queWifi2.age`) that is decrypted at
+The disk is **encrypted** (LUKS2 + btrfs, swapfile inside —
+`modules/nixos/hardware/disko-btrfs-luks.nix`, same layout as t14). `/boot` is
+the unencrypted ESP, as on Arch, and the initrd asks for the passphrase once,
+with the **Dvorak** keymap.
+
+⚠️ Re-installing erases the whole disk. Back up `/home/frank` (and, if you want
+the WiFi networks added with `iwctl`, `/var/lib/iwd`) before you start.
+
+To let the machine reach the network on its **first boot**, the WiFi PSKs are
+stored as `agenix` secrets (`secrets/iwd-*.age`) that are decrypted at
 boot using the host SSH key. That host key is pre-generated and kept in
 `.extra-files/samsung-expert/etc/ssh/` (gitignored — it is the private key the
 secret is encrypted to; keep it safe and never commit it). We copy it into
@@ -44,7 +52,7 @@ Copy `$OUT` onto a spare USB stick (separate from the NixOS installer USB).
 Sanity-check the bundle before copying:
 
 ```bash
-tar tzf "$OUT" | grep -E 'flake.nix|secrets/wifi-queWifi2.age|extra-files/.*/ssh_host_ed25519_key$'
+tar tzf "$OUT" | grep -E 'flake.nix|secrets/iwd-QUEWIFI-5G.age|extra-files/.*/ssh_host_ed25519_key$'
 ```
 
 You should see the flake, the `.age` secret, and the private host key.
@@ -87,7 +95,11 @@ cp /mnt/src/nixos-install-bundle.tar.gz /root/
 umount /mnt/src
 cd /root && tar xzf nixos-install-bundle.tar.gz && cd nix_os
 
-# 2. Partition + format + mount /dev/sda  (⚠️ ERASES the entire 894G disk)
+# 2. Partition + encrypt + format + mount /dev/sda  (⚠️ ERASES the entire 894G disk)
+#    cryptsetup asks for the new LUKS passphrase here. Switch the installer
+#    keyboard to Dvorak FIRST (graphical ISO: Settings → Keyboard; a text
+#    console: `loadkeys dvorak`), so you set the passphrase with the same
+#    layout the initrd prompt will use at every boot.
 #    If this errors on an older disko CLI, use: --mode disko
 nix run github:nix-community/disko/latest -- \
   --mode destroy,format,mount \
@@ -100,7 +112,7 @@ cp /mnt/etc/nixos/hardware-configuration.nix hosts/samsung-expert/hardware-confi
 # 4. Install the system (root stays locked; the frank password is baked in)
 nixos-install --flake .#samsung-expert --no-root-passwd
 
-# 5. Inject the agenix host key BEFORE reboot, so WiFi decrypts on first boot
+# 5. Inject the agenix host key BEFORE reboot, so the secrets decrypt on first boot
 install -d -m700 /mnt/etc/ssh
 install -m600 .extra-files/samsung-expert/etc/ssh/ssh_host_ed25519_key     /mnt/etc/ssh/ssh_host_ed25519_key
 install -m644 .extra-files/samsung-expert/etc/ssh/ssh_host_ed25519_key.pub /mnt/etc/ssh/ssh_host_ed25519_key.pub
@@ -113,12 +125,14 @@ reboot
 
 ## 4. After reboot
 
-`ath10k_pci` brings up the QCA9377, `agenix` decrypts the PSK, and
-`wpa_supplicant` joins `QUEWIFI-5G` automatically. Log in at the console as
+The initrd asks for the LUKS passphrase (Dvorak), then the machine boots
+straight into the desktop (tty1 autologin). `ath10k_pci` brings up the QCA9377, `agenix`
+decrypts the PSKs into `/var/lib/iwd`, and `iwd` joins a known network
+automatically. Log in at the console as
 `frank`, or SSH from your workstation once it is online:
 
 ```bash
-ssh -i ~/.ssh/personal_id_ed25519_2023-11 frank@<ip>    # default port 22
+ssh -i ~/.ssh/personal_id_ed25519_2023-11 -p <ssh_port> frank@<ip>    # port from secrets/ssh-port.age (22 if absent)
 ```
 
 Find `<ip>` from your router, or run `ip a` on the target console.
@@ -126,9 +140,9 @@ Find `<ip>` from your router, or run `ip a` on the target console.
 If WiFi does **not** come up on first boot, log in at the console and check:
 
 ```bash
-journalctl -u wpa_supplicant
-systemctl status 'run-agenix*'     # did the secret decrypt?
-ls -l /run/agenix/                 # should contain wifi-queWifi2
+journalctl -u iwd
+journalctl -b | grep -i agenix     # did the secrets decrypt?
+ls -l /var/lib/iwd/                # should contain QUEWIFI-5G.psk and the others
 ```
 
 The most likely culprit is the host-key copy in step 5, not the config —

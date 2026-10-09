@@ -2,6 +2,8 @@
 {
   imports = [
     ./scripts.nix
+    ./repos.nix
+    ./gpg.nix
 
     ./shell/fish.nix
     ./shell/tmux.nix
@@ -15,6 +17,9 @@
     ./desktop/dunst.nix
     ./desktop/feh.nix
     ./desktop/xbindkeys.nix
+    ./desktop/crash-notify.nix
+    ./desktop/gtk-theme.nix
+    ./desktop/x-tools.nix
 
     ./programs/neovim.nix
     ./programs/git.nix
@@ -26,18 +31,25 @@
     ./programs/anki.nix
     ./programs/calibre.nix
     ./programs/zoxide.nix
+    ./programs/browsers.nix
+    ./programs/spotify.nix
+    ./programs/office.nix
+    ./programs/ente-auth.nix
+    ./programs/dev-tools.nix
 
     ./work/fonts.nix
-    ./work/neomutt.nix
     ./work/aws.nix
     ./work/datagrip.nix
     ./work/cursor.nix
-    ./work/onepassword.nix
+    ./work/databricks.nix
+    ./work/tools.nix
     ./work/slack.nix
 
     ./services/redshift.nix
     ./services/rclone.nix
     ./services/syncthing.nix
+    ./services/cron-jobs.nix
+    ./services/insync.nix
   ];
 
   home = {

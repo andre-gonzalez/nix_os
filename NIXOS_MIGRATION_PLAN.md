@@ -46,7 +46,7 @@ nixos-config/
 │   │   │   ├── locale.nix             # Timezone, locale, keyboard (vconsole)
 │   │   │   ├── packages.nix           # Base system packages (git, btop, ansible…)
 │   │   │   ├── ssh.nix                # sshd hardening, authorized_keys from GitHub
-│   │   │   ├── security.nix           # Apparmor, fail2ban, auditd, password policy
+│   │   │   ├── security.nix           # fail2ban, auditd, password policy
 │   │   │   ├── network.nix            # DNS (1.1.1.3), systemd-resolved
 │   │   │   ├── firewall.nix           # nftables/UFW rules, block ping, tailscale allow
 │   │   │   └── fish.nix               # System-wide fish shell default
@@ -262,7 +262,6 @@ services.openssh = {
 #### security.nix
 ```nix
 # Mirrors roles/base/tasks/security.yml
-security.apparmor.enable = true;
 security.auditd.enable = true;
 services.fail2ban = {
   enable = true;
@@ -526,7 +525,7 @@ ansible-vault decrypt --output=- <file> | agenix -e secrets/<name>.age
 | `systemd-resolved` | `services.resolved` |
 | `pipewire` + `wireplumber` | `services.pipewire` |
 | `fail2ban` | `services.fail2ban` |
-| `apparmor` | `security.apparmor` |
+| `apparmor` | dropped (disabled on Arch too) |
 | `auditd` | `security.auditd` |
 | `ufw` | `networking.firewall` (nftables) |
 | `tailscale` | `services.tailscale` |
@@ -581,7 +580,7 @@ ansible-vault decrypt --output=- <file> | agenix -e secrets/<name>.age
 | `git-delta` | `pkgs.delta` |
 | `megasync-bin` (AUR) | `pkgs.megasync` or AppImage via `pkgs.appimageTools` |
 | `btrfs-assistant` (AUR) | `pkgs.btrfs-assistant` |
-| `noisetorch-bin` (AUR) | `pkgs.noisetorch` |
+| `noisetorch-bin` (AUR) | dropped (broken with PipeWire 1.x, removed on Arch too) |
 | `dashbinsh` (AUR) | `pkgs.dash` + symlink (`/bin/sh → dash`) |
 | `advcpmv` (AUR) | Build from source in `pkgs/advcpmv/` |
 | `xautolock` | `pkgs.xautolock` |
@@ -664,7 +663,7 @@ boot.loader.grub = {
 };
 # Kernel parameters (from roles/base/tasks/security.yml)
 boot.kernelParams = [
-  "lsm=landlock,lockdown,yama,integrity,apparmor,bpf"
+  "lsm=landlock,lockdown,yama,integrity,bpf"
   "audit=1"
 ];
 ```
@@ -714,12 +713,11 @@ boot.kernelParams = [
 
 ### Phase 6 — Samsung Expert Book
 - [ ] Run `nixos-generate-config` on the laptop
-- [ ] Write `hosts/samsung-expert/default.nix` (base + intel + power + tailscale)
+- [ ] Write `hosts/samsung-expert/default.nix` (base + intel + power + tailscale + docker + libvirt, LUKS)
 - [ ] Test TLP + intel-undervolt + WiFi (iwd)
 - [ ] Verify battery life is comparable to Arch
 
 ### Phase 7 — Hardening and cleanup
-- [ ] Verify apparmor profiles load correctly
 - [ ] Verify auditd produces expected logs
 - [ ] Verify fail2ban triggers on SSH brute force
 - [ ] Run `nixos-rebuild build` from a clean state to confirm reproducibility

@@ -1,83 +1,88 @@
-# dwmblocks — modular status bar for dwm
+# dwmblocks-async — the status bar dwm actually runs
+# (github.com/andre-gonzalez/dwmblocks-async; roles/light_workstation/tasks/dwmblocks.yml
+# built this repo, not the older andre-gonzalez/dwmblocks this file used to point at).
 #
-# Upstream's `make install` copies *only* the dwmblocks binary, but the binary's
-# compiled-in config.h shells out to thirteen `dwm_*` helpers that live in the
-# repo's bar-functions/ directory. On Arch that gap was papered over by a manual
-# `sudo make install` that had, at some point, dropped those helpers into
-# /usr/local/bin; on NixOS there is no such leftover, so every block ran a
-# command that did not exist and the bar came up empty. Hence the postInstall
-# below: the helpers ship in the same output as the binary that calls them.
+# The binary's config.h calls ~17 `dwm_*` helpers by bare name. Upstream's
+# `make install` copies the shell ones into PREFIX/bin but only *symlinks* the
+# compiled ones back into the build tree, which does not survive in the store —
+# so the install phase is written out here instead. Which helper is which is
+# read from the Makefile's own BAR_NAMES / BAR_SHELL lists, so a block added
+# upstream is picked up on the next rev bump.
 #
-# The helpers are wrapped rather than merely copied because a status block is
-# spawned by dwmblocks with whatever PATH the X session happened to inherit —
-# on a graphical login, close to nothing. Wrapping pins the tools each needs.
-{ stdenv, lib, makeWrapper, libx11
-, coreutils, gnugrep, gnused, gawk, findutils, procps
-, iproute2, iw, iwd, bluez, playerctl, pamixer, brightnessctl, dunst
-, libnotify, btrfs-progs
+# Every helper is wrapped with the tools it needs: dwmblocks spawns blocks with
+# whatever PATH the X session inherited, and a block that cannot find its tool
+# prints nothing rather than complaining. dwmblocks itself is wrapped with its
+# own bin/ for the same reason.
+#
+# Known Arch-isms upstream, left alone rather than patched into divergence:
+# dwm_packages (pacman's checkupdates) and dwm_ufw (`sudo ufw`) render nothing.
+{ stdenv, lib, fetchFromGitHub, makeWrapper, pkg-config
+, libxcb, libxcb-util, systemd
+, coreutils, gnugrep, gnused, gawk, findutils, procps, util-linux
+, iproute2, iw, iwd, bluez, playerctl, pamixer, pulseaudio, brightnessctl
+, libnotify, btrfs-progs, curl, jq, dbus, xclip, ncdu, tmux
 }:
 let
-  # Union of every external command reachable from the blocks listed in
-  # config.h. Kept as one list rather than per-script: the scripts are upstream
-  # content that changes without notice, and a missing entry fails silently —
-  # a block that cannot find its tool prints nothing rather than complaining.
+  # Union of every external command the helpers and the bluetooth watcher call.
   runtimeDeps = [
-    coreutils gnugrep gnused gawk findutils procps
-    iproute2 iw iwd bluez playerctl pamixer brightnessctl dunst
-    libnotify btrfs-progs
+    coreutils gnugrep gnused gawk findutils procps util-linux
+    iproute2 iw iwd bluez playerctl pamixer pulseaudio brightnessctl
+    libnotify btrfs-progs curl jq dbus xclip ncdu tmux
   ];
 in
 stdenv.mkDerivation {
-  pname = "dwmblocks";
-  version = "unstable";
+  pname = "dwmblocks-async";
+  version = "unstable-2026-09-17";
 
-  src = builtins.fetchGit {
-    url = "https://github.com/andre-gonzalez/dwmblocks.git";
-    ref = "main";
-    rev = "14e1110b408fc97c1fb32c2f84515eeb8eca377f";
+  src = fetchFromGitHub {
+    owner = "andre-gonzalez";
+    repo = "dwmblocks-async";
+    rev = "c33a41fd94926b00ae5458de1f451787964907ff";
+    hash = "sha256-KOs8F/zOWkL2KxtYOtW/J01njd8rddmZ2mOZ4ROQrrQ=";
   };
 
-  nativeBuildInputs = [ makeWrapper ];
-  buildInputs = [ libx11 ];
+  nativeBuildInputs = [ pkg-config makeWrapper ];
+  buildInputs = [ libxcb libxcb-util systemd ];
 
-  makeFlags = [ "PREFIX=$(out)" ];
-  preBuild = "make clean"; # upstream commits a prebuilt generic-Linux binary; force a real recompile
-
-  # The T14's battery enumerates as BAT0, but the script hardcodes the BAT1 of
-  # the machine it was written on and then does integer comparisons on the
-  # empty string it reads back. Patched here rather than upstream because the
-  # node name is a fact about this hardware, not about the script: globbing
-  # keeps it right on whatever the next machine calls its battery.
+  # dwm_currency sources its config from next to itself, which in the store is
+  # a read-only path nobody can write to. Read it from ~/.config/dwmblocks/,
+  # where the per-machine file already lives, and keep the upstream defaults
+  # when it is absent (a failed `.` would kill the block outright).
   postPatch = ''
-    substituteInPlace bar-functions/dwm_battery \
-      --replace-fail 'BAT="BAT1"' \
-        'BAT=$(basename "$(echo /sys/class/power_supply/BAT* | cut -d" " -f1)")'
+    substituteInPlace bar-functions/dwm_currency \
+      --replace-fail '. "''${0%/*}/dwm_currency.conf"' \
+        'conf="''${XDG_CONFIG_HOME:-$HOME/.config}/dwmblocks/dwm_currency.conf"; [ -r "$conf" ] && . "$conf"'
   '';
 
-  postInstall = ''
-    for f in bar-functions/dwm_*; do
-      # Skip the C sources and sample configs sitting alongside the helpers.
-      case "$f" in *.c|*.conf.example) continue ;; esac
+  installPhase = ''
+    runHook preInstall
 
-      # config.h calls the helpers by bare name — `dwm_systemd_networkd`, not
-      # `dwm_systemd_networkd.sh` — so the extension is dropped on install.
-      name=$(basename "$f" .sh)
-      install -Dm755 "$f" "$out/bin/$name"
-      patchShebangs "$out/bin/$name"
-      wrapProgram "$out/bin/$name" \
-        --prefix PATH : ${lib.makeBinPath runtimeDeps}
+    install -Dm755 build/dwmblocks $out/bin/dwmblocks
+
+    vars() { make -s --no-print-directory --eval 'print-%: ; @echo $($*)' "print-$1"; }
+
+    for name in $(vars BAR_NAMES); do        # compiled helpers (<name>_c)
+      install -Dm755 "bar-functions/''${name}_c" "$out/bin/$name"
     done
+    for name in $(vars BAR_SHELL); do        # shell helpers
+      install -Dm755 "bar-functions/$name" "$out/bin/$name"
+    done
+    install -Dm755 services/dwmblocks-bluetooth $out/bin/dwmblocks-bluetooth
 
-    # dwmblocks itself is started from .xinitrc, where PATH is whatever the X
-    # session inherited; pinning its own bin/ means the blocks resolve even if
-    # this package never made it onto the interactive PATH.
-    wrapProgram "$out/bin/dwmblocks" --prefix PATH : "$out/bin"
+    patchShebangs $out/bin
+    for f in $out/bin/dwm_* $out/bin/dwmblocks-bluetooth; do
+      wrapProgram "$f" --prefix PATH : ${lib.makeBinPath runtimeDeps}
+    done
+    wrapProgram $out/bin/dwmblocks --prefix PATH : "$out/bin"
+
+    runHook postInstall
   '';
 
   meta = {
-    description = "modular status bar for dwm";
-    homepage    = "https://github.com/andre-gonzalez/dwmblocks";
-    license     = lib.licenses.mit;
-    platforms   = lib.platforms.linux;
+    description = "Asynchronous modular status bar for dwm (personal fork)";
+    homepage = "https://github.com/andre-gonzalez/dwmblocks-async";
+    license = lib.licenses.gpl2Only;
+    platforms = lib.platforms.linux;
+    mainProgram = "dwmblocks";
   };
 }

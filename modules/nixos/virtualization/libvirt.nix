@@ -17,6 +17,14 @@
 
   users.users.frank.extraGroups = [ "libvirtd" "kvm" ];
 
+  # virsh & co. as frank talk to the system daemon by default, not to a
+  # per-user qemu:///session with no VMs (roles/heavy_workstation/tasks/
+  # Libvirt.yml set uri_default in both files). A non-root client only reads
+  # its XDG copy; root already defaults to qemu:///system.
+  home-manager.users.frank.xdg.configFile."libvirt/libvirt.conf".text = ''
+    uri_default = "qemu:///system"
+  '';
+
   environment.systemPackages = with pkgs; [
     virt-viewer
     spice-gtk

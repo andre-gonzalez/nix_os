@@ -21,12 +21,17 @@
     SCHED_POWERSAVE_ON_BAT = 1;
   };
 
-  # Intel CPU voltage/frequency control (AUR: intel-undervolt).
-  # Requires calibration per-machine before enabling.
+  # Intel CPU undervolt (AUR: intel-undervolt). Off, as on Arch: the Ansible
+  # intel-undervolt.conf started with `enable no`, so it never applied. The
+  # offsets below are the ones calibrated there on samsung-expert, kept for
+  # when it is switched on (cache at -110 mV broke that machine).
   services.undervolt = {
     enable = false;
-    # core  = -80;   # mV undervolt on P-cores
-    # cache = -80;
-    # gpu   = -40;
+    # coreOffset = -140;   # mV, intel-undervolt "CPU"
+    # gpuOffset = -55;     # "GPU"
+    # uncoreOffset = -20;  # "System Agent"
+    # analogioOffset = -20; # "Analog I/O"
   };
+  # Not expressible here: "CPU Cache" was -90 on Arch, but services.undervolt
+  # always sets cache = coreOffset; and Arch also set `tjoffset -10`.
 }

@@ -53,7 +53,7 @@ samsung host file — the T14 host **must** set it or amdgpu will not initialize
 |---|---|---|
 | 1 | Host identity | T14 **replaces `workstation`**; rename to **`t14`** |
 | 2 | Install | Wipe + disko, **with LUKS added** |
-| 3 | Boot | **GRUB**, `/boot` **inside** LUKS, ESP at `/boot/efi` |
+| 3 | Boot | **GRUB**, `/boot` = unencrypted 1 G ESP, initrd unlocks LUKS *(revised, see §4)* |
 | 4 | Swap | **8 G btrfs swapfile inside LUKS** + zram, **no hibernation** |
 | 5 | Fingerprint | **sudo + slock**, patching the slock fork |
 | 6 | slock changes | **Split**: PAM patch upstream in the fork, `nogroup` fix in the Nix derivation |
@@ -107,6 +107,15 @@ currently imports both (already logged as item 4 in `NIXOS_STRUCTURE.md`). **Not
 
 ## 4. Disk: `modules/nixos/hardware/disko-btrfs-luks.nix` (new)
 
+> **Revised 2026-10-09: `/boot` moved out of LUKS.** GRUB unlocks a cryptodisk
+> from its core image, before grub.cfg can load a keymap, so it always reads
+> the passphrase with US keys — unusable with a Dvorak-typed passphrase. Arch
+> had `/boot` on the ESP and a Dvorak initrd prompt; the module now does the
+> same: ESP 1 G at `/boot`, `console.earlySetup` for a Dvorak initrd prompt,
+> default argon2id (no pbkdf2), no cryptodisk, no initrd keyfile, GRUB
+> `configurationLimit = 10`. The layout, pbkdf2 and keyfile notes below are the
+> original plan, kept for history.
+
 Keep the existing unencrypted `disko-btrfs.nix` for other hosts; write a separate encrypted variant.
 
 Layout on `/dev/nvme0n1`:
@@ -152,7 +161,7 @@ boot.loader.efi.canTouchEfiVariables = true;   # Lenovo firmware is fine with NV
 boot.loader.efi.efiSysMountPoint = "/boot/efi"; # unlike the Samsung (efiInstallAsRemovable)
 boot.kernelPackages = pkgs.linuxPackages_latest;
 hardware.enableRedistributableFirmware = true;
-boot.kernelParams = [ "lsm=landlock,lockdown,yama,integrity,apparmor,bpf" "audit=1" ];
+boot.kernelParams = [ "lsm=landlock,lockdown,yama,integrity,bpf" "audit=1" ];
 ```
 
 ### Open sub-decision: one passphrase prompt or two
@@ -426,7 +435,7 @@ Adapted from `INSTALL.md` (written for samsung-expert), which already has the ri
 | GPU | `lsmod \| grep amdgpu`; `vainfo` reports **radeonsi**; `glxinfo -B` shows Radeon 860M |
 | Fingerprint | `fprintd-list frank`; `sudo -k && sudo -v` prompts for finger, Ctrl-C falls back to password |
 | slock | locks and **unlocks by finger**; confirm it no longer dies on `getgrnam` |
-| Boot | one passphrase prompt (or two, if the initrd keyfile was skipped) |
+| Boot | one passphrase prompt, in the initrd, Dvorak layout |
 | Swap | `swapon --show` — zram at priority 100, `/swap/swapfile` below it |
 | Power | `tlp-stat -p` shows governor `powersave` + EPP `performance`/`balance_power` |
 | Battery | `cat /sys/class/power_supply/BAT0/charge_control_end_threshold` → `80` |

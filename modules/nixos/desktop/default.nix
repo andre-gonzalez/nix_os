@@ -8,5 +8,11 @@
     ./printing.nix
     ./fonts.nix
     ./autorandr.nix
+    ./wifi.nix
+    ./kdeconnect.nix
+    ./keyring.nix
+    ./onepassword.nix
+    ./uberall-vpn.nix
+    ./gnupg.nix
   ];
 }

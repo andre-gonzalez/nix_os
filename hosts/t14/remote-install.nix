@@ -47,22 +47,14 @@
   local.diskoLuks.passwordFile = "/tmp/luks.key";
 
   #############################################################################
-  # 2. No single-prompt initrd keyfile. boot.initrd.secrets is resolved during
-  #    nixos-install, before --extra-files are copied into /mnt, so
-  #    /boot/crypto_keyfile.bin cannot exist in time and the bootloader step
-  #    would abort. Cost: one extra passphrase prompt at boot (GRUB, then initrd).
-  #############################################################################
-  local.diskoLuks.useInitrdKeyFile = false;
-
-  #############################################################################
-  # 3. No agenix. secrets/iwd-QUEWIFI-5G.age is encrypted to the t14 host key
+  # 2. No agenix. secrets/iwd-QUEWIFI-5G.age is encrypted to the t14 host key
   #    (secrets/secrets.nix); the target generates its own, different key, so
   #    activation would fail on every boot. Join WiFi with `iwctl` instead.
   #############################################################################
   age.secrets = lib.mkForce { };
 
   #############################################################################
-  # 4. No fingerprint reader on this machine. Left enabled, pam_fprintd is
+  # 3. No fingerprint reader on this machine. Left enabled, pam_fprintd is
   #    consulted first on every sudo and stalls until it times out. The
   #    security.pam.services.slock *entry* must survive though — it is what
   #    creates /etc/pam.d/slock, and the slock fork opens that service by name

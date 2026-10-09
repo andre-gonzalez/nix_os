@@ -4,6 +4,13 @@
   hardware.bluetooth = {
     enable = true;
     powerOnBoot = true;
+    # As in /etc/bluetooth/main.conf on Arch (bluetooth.yml): experimental
+    # D-Bus interfaces, which is what exposes a headset's battery level
+    # (org.bluez.Battery1) to the dwm_bluetooth block.
+    settings.General = {
+      Experimental = true;
+      KernelExperimental = true;
+    };
   };
 
   services.blueman.enable = true;
@@ -24,5 +31,8 @@
     wantedBy = [ "default.target" ];
   };
 
-  environment.systemPackages = [ pkgs.bluez ];
+  environment.systemPackages = [
+    pkgs.bluez
+    pkgs.bluez-tools # bt-device, bt-adapter, bt-agent (bluetooth.yml)
+  ];
 }

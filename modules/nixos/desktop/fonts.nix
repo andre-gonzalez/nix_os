@@ -8,6 +8,7 @@
       # Noto family (mirrors noto-fonts-* on Arch)
       noto-fonts
       noto-fonts-cjk-sans
+      noto-fonts-cjk-serif     # noto-fonts-cjk on Arch ships both
       noto-fonts-color-emoji   # was noto-fonts-emoji (renamed)
       # noto-fonts-extra was dropped from nixpkgs
 
@@ -31,6 +32,7 @@
 
       # Additional
       font-awesome
+      symbola                  # ttf-symbola on Arch (lfub task): symbol/emoji fallback
     ];
 
     fontconfig = {

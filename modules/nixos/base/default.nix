@@ -2,6 +2,7 @@
 {
   imports = [
     ./users.nix
+    ./user-secrets.nix
     ./locale.nix
     ./packages.nix
     ./ssh.nix
