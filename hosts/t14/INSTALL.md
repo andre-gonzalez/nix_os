@@ -232,8 +232,8 @@ ls /sys/firmware/efi >/dev/null 2>&1 && echo "UEFI ✅" || echo "LEGACY ❌"
 
    nixos-anywhere kexecs into its own installer, so the target's ISO desktop
    dies a minute in — that is expected. It needs a **wired** link: kexec drops
-   WiFi, which is exactly why `samsung-expert` is installed locally instead
-   (see the root `INSTALL.md`).
+   WiFi. Over WiFi, skip kexec with `--phases disko,install,reboot` and install
+   onto the booted ISO, as `samsung-expert` does (see the root `INSTALL.md`).
 
 ### 6.3 After it reboots
 

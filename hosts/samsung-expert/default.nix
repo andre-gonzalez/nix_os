@@ -24,6 +24,13 @@
 
   networking.hostName = "samsung-expert";
 
+  # LUKS passphrase for the remote install (nixos-anywhere.sh): cryptsetup has
+  # no tty over ssh, so disko reads it from this file, which nixos-anywhere
+  # ships to the installer's tmpfs with --disk-encryption-keys. Only read at
+  # format time; it has no effect on the installed system. A local install from
+  # INSTALL.md must create this file before running disko.
+  local.diskoLuks.passwordFile = "/tmp/luks.key";
+
   # The only host with a second, spinning SATA disk. This serial used to be
   # written to /etc/tlp.conf on *every* notebook by the Ansible role, including
   # machines that have no SATA controller at all.
