@@ -1,5 +1,5 @@
 # Mirrors roles/base/tasks/users.yml
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 {
   users.users.frank = {
     isNormalUser = true;
@@ -51,6 +51,23 @@
         "/run/current-system/sw/bin/rsync"
         "/etc/profiles/per-user/frank/bin/rsync"
       ];
+    }
+    # ~/.scripts/save-data stops and starts these units on a metered network
+    # (roles/base/files/sudoers_save_data). It runs from dmenu, with no tty for
+    # the prompt. Same list as Arch, so the script needs no per-host logic; a
+    # unit missing on this host (cronie, pkgstats.timer, …) is harmless.
+    {
+      users = [ "frank" ];
+      commands = lib.concatMap
+        (unit: map (verb: {
+          command = "/run/current-system/sw/bin/systemctl ${verb} ${unit}";
+          options = [ "NOPASSWD" ];
+        }) [ "stop" "start" ])
+        [
+          "clamav-freshclam" "clamav-freshclam.timer" "pkgstats.timer"
+          "archlinux-keyring-wkd-sync.timer" "docker.socket" "docker"
+          "containerd" "nix-daemon" "tailscaled" "awsvpnclient" "cronie"
+        ];
     }
   ];
 }
