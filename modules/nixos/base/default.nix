@@ -11,5 +11,6 @@
     ./firewall.nix
     ./fish.nix
     ./fstrim.nix
+    ./home-repos-online.nix
   ];
 }
